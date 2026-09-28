@@ -11,7 +11,9 @@
     "test": "node --import tsx --test tests/*.test.ts",
     "test:e2e": "playwright test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "benchmark:setup": "npm ci --prefix benchmark-repo --ignore-scripts",
+    "benchmark:verify": "node --import tsx scripts/verify-benchmark.ts"
   },
   "engines": {
     "node": ">=22"

@@ -45,7 +45,7 @@ test("hero flow exposes the contract failure, exact inputs, disabled action, and
   await expect(page).toHaveURL(/\/runs\/SL-1042$/);
   await expect(
     page.getByText(
-      "Existing callers expected Customer[], but the agent changed the endpoint to return { data, page, total }.",
+      "Existing callers expected Customer[], but the agent changed the endpoint to return { data, page, pageSize, total }.",
       { exact: true },
     ),
   ).toBeVisible();
@@ -93,4 +93,15 @@ test("mobile pages fit the viewport and preserve navigation", async ({
       ),
     ).toBe(true);
   }
+});
+
+test("execution controls and endpoint are disabled in production", async ({
+  page,
+  request,
+}) => {
+  expect((await page.goto("/verification"))?.status()).toBe(404);
+  const response = await request.post("/api/benchmark", {
+    data: { patchId: "pagination-compatible" },
+  });
+  expect(response.status()).toBe(404);
 });

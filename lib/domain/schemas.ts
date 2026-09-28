@@ -51,6 +51,25 @@ export const testCountsSchema = z.object({
   failed: count,
   skipped: count,
 });
+export const checkRecordSchema = z.object({
+  id: z.enum(["TYPECHECK", "PUBLIC", "CONTRACT", "SCOPE"]),
+  command: z.string(),
+  status: z.enum(["PASSED", "FAILED", "ERROR", "TIMED_OUT"]),
+  exitCode: z.number().int().nullable(),
+  durationMs: count,
+  stdout: z.string(),
+  stderr: z.string(),
+  outputTruncated: z.boolean(),
+  assertions: z.array(
+    z.object({
+      name: z.string(),
+      file: z.string(),
+      status: z.enum(["passed", "failed", "pending", "skipped", "todo"]),
+      failureMessages: z.array(z.string()),
+    }),
+  ),
+  reportError: z.string().optional(),
+});
 export const evaluationResultSchema = z
   .object({
     typecheck: z.enum(["PASSED", "FAILED", "NOT_RUN"]),
@@ -63,6 +82,9 @@ export const evaluationResultSchema = z
     overallResult: z.enum(["PASSED", "FAILED", "REVIEW_REQUIRED"]),
     checksRun: z.array(checkSchema),
     failureDetails: z.array(z.string()),
+    publicTests: testCountsSchema.optional(),
+    validationDurationMs: count.optional(),
+    checkRecords: z.array(checkRecordSchema).optional(),
   })
   .superRefine((result, ctx) => {
     const failed =
@@ -72,7 +94,8 @@ export const evaluationResultSchema = z
       result.forbiddenFilesChanged.length > 0 ||
       [result.unitTests, result.integrationTests, result.contractTests].some(
         (suite) => suite.failed > 0,
-      );
+      ) ||
+      result.checkRecords?.some((check) => check.status === "FAILED");
     if (failed && result.overallResult !== "FAILED")
       ctx.addIssue({
         code: "custom",
@@ -83,6 +106,9 @@ export const evaluationResultSchema = z
       result.scopeAdherence !== "PASSED" ||
       [result.unitTests, result.integrationTests, result.contractTests].some(
         (suite) => suite.skipped > 0,
+      ) ||
+      result.checkRecords?.some(
+        (check) => check.status === "ERROR" || check.status === "TIMED_OUT",
       );
     if (incomplete && result.overallResult === "PASSED")
       ctx.addIssue({

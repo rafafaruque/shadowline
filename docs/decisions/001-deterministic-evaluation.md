@@ -4,7 +4,7 @@ Status: accepted for the prototype.
 
 ## Context
 
-Generated code can look plausible and satisfy ordinary unit tests while breaking external callers, authorization boundaries, or allowed-file constraints. An LLM explaining its own output is not independent evidence of correctness. The pagination scenario passes unit tests but changes `Customer[]` into `{ data, page, total }` for existing clients.
+Generated code can look plausible and satisfy ordinary unit tests while breaking external callers, authorization boundaries, or allowed-file constraints. An LLM explaining its own output is not independent evidence of correctness. The pagination scenario passes unit tests but changes `Customer[]` into `{ data, page, pageSize, total }` for existing clients.
 
 ## Decision
 
@@ -18,7 +18,7 @@ Agent-requested validation is distinct from evaluator-owned validation. Future h
 
 Executable checks are reproducible and auditable, but take engineering effort and can have blind spots. Passing a finite suite does not prove correctness. Scope ambiguity, unverifiable design quality, and higher-impact work still need human judgment. Deterministic evidence should support review decisions without creating false certainty.
 
-Phase 1 contains authored evidence rather than executable benchmark evaluation. Its application tests verify fixture integrity and policy behavior, not generated-code correctness.
+Phase 1 contains authored evidence. Phase 2 adds real executable validation of two reviewed pagination patches, independently checking the historical contract and marking its regression critical. No generated agent code is evaluated yet.
 
 ## Alternatives considered
 

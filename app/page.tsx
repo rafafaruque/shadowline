@@ -84,16 +84,16 @@ export default function Dashboard() {
               <ArrowRight size={16} />
               <div>
                 <span>RECEIVED</span>
-                <code>{"{ data, page, total }"}</code>
+                <code>{"{ data, page, pageSize, total }"}</code>
               </div>
             </div>
             <div className="spotlight-evidence">
               <span>
                 <ShieldCheck size={14} />
-                14/14 unit tests
+                11/11 public tests
               </span>
               <span className="text-bad">
-                <TriangleAlert size={14} />1 contract failure
+                <TriangleAlert size={14} />2 contract failures
               </span>
             </div>
             <Link href="/runs/SL-1042" className="button dark full-width">

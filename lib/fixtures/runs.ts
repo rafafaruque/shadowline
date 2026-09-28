@@ -57,14 +57,15 @@ const inputs: FixtureInput[] = [
     summary:
       "Pagination works for new callers, but changes the response shape for existing consumers.",
     regressionDetected: true,
-    evaluation: evidence(14, 4, 2, {
-      contractTests: { passed: 2, failed: 1, skipped: 0 },
-      scopeAdherence: "WARNING",
+    filesChanged: ["src/routes/customers.ts"],
+    evaluation: evidence(4, 7, 14, {
+      contractTests: { passed: 14, failed: 2, skipped: 0 },
+      criticalFailure: true,
       overallResult: "FAILED",
       failureDetails: [
-        "Existing callers expected Customer[], but the agent changed the endpoint to return { data, page, total }.",
-        "tests/contracts/customers.test.ts:42 — GET /customers without query parameters must return an array.",
-        "Scope warning: public API behavior changed beyond the requested opt-in pagination feature.",
+        "Existing callers expected Customer[], but the agent changed the endpoint to return { data, page, pageSize, total }.",
+        "hidden-tests/customer-contract.test.ts — GET /customers without query parameters must return an array.",
+        "hidden-tests/pagination-contract.test.ts — unrelated query parameters must preserve the legacy array response.",
       ],
     }),
     diagnoses: [
@@ -93,7 +94,7 @@ const inputs: FixtureInput[] = [
       contextFilesToAdd: [
         "docs/api-conventions.md",
         "src/lib/pagination.ts",
-        "tests/contracts/customers.test.ts",
+        "tests/customers.test.ts",
       ],
       acceptanceCriteriaToAdd: [
         "Existing callers without pagination parameters must preserve the old Customer[] response shape.",
@@ -277,7 +278,8 @@ const inputs: FixtureInput[] = [
     attempt: 2,
     summary:
       "Illustrative rerun preserves Customer[] for existing callers and enables opt-in pagination.",
-    evaluation: evidence(17, 5, 3),
+    filesChanged: ["src/routes/customers.ts"],
+    evaluation: evidence(4, 7, 16),
   },
 ];
 export const runs = inputs

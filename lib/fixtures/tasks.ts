@@ -9,7 +9,7 @@ const definitions: Pick<
     id: "customers-pagination",
     title: "Add pagination support to GET /customers",
     description:
-      "Support optional page and limit parameters on the customer endpoint. Preserve existing behavior for callers that do not opt into pagination.",
+      "Support optional page and pageSize parameters on the customer endpoint. Preserve existing behavior for callers that do not opt into pagination.",
     category: "API_CHANGE",
     riskLevel: "MEDIUM",
     allowedFiles: ["src/routes/customers.ts", "tests/customers.test.ts"],
@@ -125,14 +125,14 @@ export const tasks = definitions.map((task) =>
             "src/routes/customers.ts",
             "docs/api-conventions.md",
             "src/lib/pagination.ts",
-            "tests/contracts/customers.test.ts",
+            "tests/customers.test.ts",
           ]
         : [task.allowedFiles[0], "docs/architecture.md"],
     acceptanceCriteria:
       task.id === "customers-pagination"
         ? [
             "Existing callers without pagination parameters must receive Customer[].",
-            "Explicit page and limit parameters return a paginated envelope.",
+            "Explicit page and pageSize parameters return a paginated envelope.",
             "Reject invalid pagination values with a 400 response.",
           ]
         : [
@@ -175,11 +175,11 @@ export const agentConfigs = [
       "src/routes/customers.ts",
       "docs/api-conventions.md",
       "src/lib/pagination.ts",
-      "tests/contracts/customers.test.ts",
+      "tests/customers.test.ts",
     ],
     acceptanceCriteria: [
       "Existing callers without pagination parameters must preserve the old Customer[] response shape.",
-      "Use the existing pagination utility for explicit page and limit parameters.",
+      "Use the existing pagination utility for explicit page and pageSize parameters.",
       "Contract and integration tests must pass.",
     ],
     requiredChecks: ["TYPECHECK", "UNIT", "INTEGRATION", "CONTRACT", "SCOPE"],

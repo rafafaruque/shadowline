@@ -80,6 +80,18 @@ export default async function RunPage({
           {money(run.estimatedCost)} estimated
         </span>
       </div>
+      {task.id === "customers-pagination" && (
+        <div className="info-strip">
+          Fixture narrative aligned with the executable pagination benchmark: 11
+          public tests and 16 contract tests. Timing, tokens, cost,
+          configuration, and diagnosis remain illustrative.{" "}
+          {process.env.NODE_ENV === "development" && (
+            <Link className="text-link" href="/verification">
+              Run real verification →
+            </Link>
+          )}
+        </div>
+      )}
       <div className="detail-grid">
         <div className="detail-column">
           <section className="panel">
@@ -204,8 +216,8 @@ export default async function RunPage({
                 </code>
               ))}
               <p className="muted">
-                Illustrative file manifest; no code was executed or changed in a
-                benchmark workspace.
+                Fixture file manifest. Live verification uses a separate
+                temporary workspace and does not update this record.
               </p>
             </div>
           </section>

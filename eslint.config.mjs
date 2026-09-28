@@ -10,5 +10,6 @@ export default defineConfig([
     "next-env.d.ts",
     "test-results/**",
     "playwright-report/**",
+    "benchmark-repo/node_modules/**",
   ]),
 ]);

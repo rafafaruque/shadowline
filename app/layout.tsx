@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AppSidebar, Topbar } from "@/components/app-sidebar";
+import { AppSidebar, Topbar, EvidenceFooter } from "@/components/app-sidebar";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -24,13 +24,7 @@ export default function RootLayout({
         <div className="app-shell">
           <Topbar />
           <main id="main">{children}</main>
-          <footer className="app-footer">
-            <span>
-              <span className="fixture-dot" />
-              All results are illustrative fixtures
-            </span>
-            <span>AI proposes. Deterministic software verifies.</span>
-          </footer>
+          <EvidenceFooter />
         </div>
       </body>
     </html>

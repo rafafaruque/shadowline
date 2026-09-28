@@ -44,6 +44,10 @@ AUTO is an illustrative recommendation for low-risk work with adequate verificat
 
 Prototype success means a reviewer can follow one failure from task inputs to independent evidence, proposed intervention, and a clearly labeled illustrative rerun. Real performance claims require real measurements.
 
+## Phase 2 milestone
+
+The controlled customer-service benchmark and deterministic evaluator now execute known patches. They distinguish working pagination that breaks existing callers from a compatible implementation, using public tests and independent contracts. Breaking the legacy API shape is a critical failure. The development verification panel shows real evidence separately from all fixture/aggregate metrics. No coding agent, diagnosis model, or automatic intervention has been implemented.
+
 ## Intentional non-goals
 
 Phase 1 builds the domain model and navigation only. It does not execute an agent or a benchmark, call an LLM, persist data, assign real permissions, or prove an intervention's causal effect. It is not a general agent platform, repository host, chatbot, production policy engine, or universal correctness oracle. No authentication, billing, queues, distributed services, or multiple-provider infrastructure is needed.

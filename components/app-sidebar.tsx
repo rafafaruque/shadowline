@@ -17,6 +17,9 @@ const links = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
   { href: "/runs", label: "Benchmark runs", icon: Activity },
   { href: "/experiments", label: "Experiments", icon: FlaskConical },
+  ...(process.env.NODE_ENV === "development"
+    ? [{ href: "/verification", label: "Verification", icon: ShieldCheck }]
+    : []),
 ];
 export function AppSidebar() {
   const pathname = usePathname();
@@ -69,18 +72,21 @@ export function AppSidebar() {
       </div>
       <div className="sidebar-bottom">
         <span className="fixture-dot" />
-        Fixture mode<span className="version">v0.1</span>
+        {pathname === "/verification" ? "Local verification" : "Fixture mode"}
+        <span className="version">v0.2</span>
       </div>
     </aside>
   );
 }
 export function Topbar() {
   const pathname = usePathname();
-  const section = pathname.startsWith("/experiments")
-    ? "Experiments"
-    : pathname.startsWith("/runs")
-      ? "Benchmark runs"
-      : "Overview";
+  const section = pathname.startsWith("/verification")
+    ? "Benchmark verification"
+    : pathname.startsWith("/experiments")
+      ? "Experiments"
+      : pathname.startsWith("/runs")
+        ? "Benchmark runs"
+        : "Overview";
   return (
     <div className="topbar">
       <div className="breadcrumbs">
@@ -93,8 +99,23 @@ export function Topbar() {
           <GitBranch size={13} />
           shadowline-benchmark
         </span>
-        <span className="demo-tag">PHASE 01 · PROTOTYPE</span>
+        <span className="demo-tag">PHASE 02 · PROTOTYPE</span>
       </div>
     </div>
+  );
+}
+
+export function EvidenceFooter() {
+  const pathname = usePathname();
+  return (
+    <footer className="app-footer">
+      <span>
+        <span className="fixture-dot" />
+        {pathname === "/verification"
+          ? "Live benchmark evidence · aggregate dashboards remain fixtures"
+          : "All results are illustrative fixtures"}
+      </span>
+      <span>AI proposes. Deterministic software verifies.</span>
+    </footer>
   );
 }

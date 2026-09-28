@@ -29,7 +29,7 @@ test("pagination pair preserves task identity, exposes contract failure, and add
   const improved = getRun(experiment.improvedRunId)!;
   assert.equal(baseline.taskId, improved.taskId);
   assert.equal(baseline.evaluation?.unitTests.failed, 0);
-  assert.equal(baseline.evaluation?.contractTests.failed, 1);
+  assert.equal(baseline.evaluation?.contractTests.failed, 2);
   assert.equal(baseline.status, "FAILED");
   assert.equal(improved.status, "PASSED");
   assert.equal(improved.attempt, 2);

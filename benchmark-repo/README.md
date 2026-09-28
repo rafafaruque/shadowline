@@ -1,13 +1,29 @@
-# Controlled benchmark repository (placeholder)
+# Controlled customer API benchmark
 
-Phase 1 reserves this location for one small customer-service benchmark. No benchmark source, executable checks, coding agent, or runner exists yet. File paths shown in the interface describe the planned repository and are illustrative.
+Small TypeScript / Hono application with twelve in-memory customers. No database, network server, authentication, or external API is needed for the tests. Hono's `app.request()` evaluates HTTP routing and responses directly.
 
-The next milestone should add:
+The untouched baseline exposes `GET /customers` → complete ordered `Customer[]`. The reusable pagination utility exists, but the endpoint intentionally has not integrated it yet.
 
-1. A minimal TypeScript customer endpoint with a seeded in-memory dataset and a stable legacy `GET /customers` → `Customer[]` contract.
-2. `docs/api-conventions.md` requiring backward compatibility and a reusable pagination utility.
-3. Unit, integration, and protected contract checks, including the no-query-parameter caller.
-4. Fixed breaking and compatible patches that exercise the same task from the same revision.
-5. A runner that operates in an isolated temporary copy, validates changed-file scope, captures deterministic results, and cleans up.
+```sh
+npm ci --ignore-scripts
+npm run typecheck
+npm test
+npm run test:hidden
+```
 
-Hidden evaluator checks should live outside the agent-editable copy. Do not add a general repository orchestration platform or an LLM until this deterministic baseline is trustworthy.
+Those commands verify **baseline readiness**: 7 public tests and 1 historical contract. They do not claim that the pagination task is implemented. From the Shadowline root, `npm run benchmark:verify` evaluates baseline plus both patches in fresh workspaces. Never manually apply patches to this baseline.
+
+```text
+src/app.ts                      HTTP application
+src/data/customers.ts           fixed ordered dataset
+src/routes/customers.ts         historical route; sole allowed patch target
+src/lib/pagination.ts           existing parser, offsets, slicing, metadata
+docs/api-conventions.md         backward compatibility and invalid-input rules
+docs/architecture.md            thin routes, shared utility, contract boundaries
+tests/                         existing public tests (7)
+hidden-tests/                   evaluator-owned compatibility/acceptance tests
+```
+
+The public task acceptance suite lives in `../benchmarks/public-tests/` and adds 4 pagination tests for both patches. The hidden pagination contract suite adds 15 checks to the baseline's 1. The runner copies hidden tests and all trusted validation configuration to a sibling harness outside editable source. No patch can target that harness through the patch-ID API.
+
+`pagination-breaking` passes typecheck and 11 public tests but fails two critical legacy-array assertions. `pagination-compatible` passes all 16 contracts. Both use the existing helper. The baseline, patch, and dependency lockfile are content-fingerprinted; execution output remains separate from the fixture dashboard.

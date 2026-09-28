@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Activity } from "lucide-react";
+import Link from "next/link";
 import { RunExplorer } from "@/components/run-explorer";
 import { PageHeading } from "@/components/ui";
 export const metadata: Metadata = { title: "Benchmark runs" };
@@ -22,6 +23,17 @@ export default function RunsPage() {
         inspect the complete evidence.
       </div>
       <RunExplorer />
+      {process.env.NODE_ENV === "development" && (
+        <div className="paired-runs" style={{ marginTop: 24 }}>
+          <div>
+            <h2>Benchmark verification</h2>
+            <p>Run the real pagination checks in an isolated workspace.</p>
+          </div>
+          <Link className="button secondary" href="/verification">
+            Open verification controls
+          </Link>
+        </div>
+      )}
     </>
   );
 }
