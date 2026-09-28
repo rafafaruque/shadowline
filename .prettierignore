@@ -7,3 +7,4 @@ test-results
 playwright-report
 benchmark-repo/node_modules
 benchmark-repo/package-lock.json
+.shadowline

@@ -46,7 +46,7 @@ Prototype success means a reviewer can follow one failure from task inputs to in
 
 ## Phase 2 milestone
 
-The controlled customer-service benchmark and deterministic evaluator now execute known patches. They distinguish working pagination that breaks existing callers from a compatible implementation, using public tests and independent contracts. Breaking the legacy API shape is a critical failure. The development verification panel shows real evidence separately from all fixture/aggregate metrics. No coding agent, diagnosis model, or automatic intervention has been implemented.
+The controlled customer-service benchmark and deterministic evaluator now execute known patches. They distinguish working pagination that breaks existing callers from a compatible implementation, using public tests and independent contracts. Breaking the legacy API shape is a critical failure. The development verification panel shows real evidence separately from all fixture/aggregate metrics. Phase 3 connects a server-side Gemini coding agent with explicit context, structured proposals, restricted execution, and separately persisted real-run evidence. Live baseline requests currently have recorded provider errors; no model-generated result is claimed. Diagnosis and automatic interventions remain unimplemented.
 
 ## Intentional non-goals
 

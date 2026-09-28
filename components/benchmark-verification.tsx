@@ -73,7 +73,7 @@ export function BenchmarkVerification() {
       </div>
       <section className="panel">
         <SectionHeading title="Controlled patch fixtures">
-          <span className="small-chip">No coding agent connected</span>
+          <span className="small-chip">Known patches · no model call</span>
         </SectionHeading>
         <div className="benchmark-actions">
           {patches.map((patch) => (

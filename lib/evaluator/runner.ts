@@ -10,7 +10,7 @@ import {
   type CheckRecord,
   type DeterministicEvaluator,
 } from "./types";
-import { withBenchmarkWorkspace } from "./workspace";
+import { withBenchmarkWorkspace, type BenchmarkWorkspace } from "./workspace";
 
 function countAssertions(assertions: CheckRecord["assertions"]) {
   return {
@@ -28,82 +28,7 @@ export async function evaluateBenchmark(input: unknown) {
   const startedAt = new Date().toISOString();
   const start = performance.now();
   const execution = await withBenchmarkWorkspace(patchId, async (workspace) => {
-    const validationStart = performance.now();
-    const scopeBefore = await checkScope(workspace);
-    const records: CheckRecord[] = [];
-    // Sequential and fixed. We retain public/contract evidence even when typecheck fails.
-    if (scopeBefore.record.status === "PASSED") {
-      for (const check of ["TYPECHECK", "PUBLIC", "CONTRACT"] as const)
-        records.push(await runCheck(check, workspace));
-    }
-    const scope = await checkScope(workspace);
-    records.push(scope.record);
-    const typecheck = records.find((record) => record.id === "TYPECHECK");
-    const publicCheck = records.find((record) => record.id === "PUBLIC");
-    const contracts = records.find((record) => record.id === "CONTRACT");
-    const publicAssertions = publicCheck?.assertions ?? [];
-    const unitAssertions = publicAssertions.filter(
-      (assertion) => assertion.file === "public/tests/pagination.test.ts",
-    );
-    const integrationAssertions = publicAssertions.filter(
-      (assertion) => assertion.file !== "public/tests/pagination.test.ts",
-    );
-    // Critical means an observed legacy API contract regression, never an inference from a process error.
-    const criticalFailure =
-      contracts?.assertions.some(
-        (assertion) =>
-          assertion.status === "failed" &&
-          assertion.name.includes(paginationBenchmark.criticalAssertionMarker),
-      ) ?? false;
-    const hasFailure =
-      records.some((record) => record.status === "FAILED") ||
-      publicAssertions.some((a) => a.status === "failed") ||
-      contracts?.assertions.some((a) => a.status === "failed");
-    const incomplete =
-      records.length !== 4 ||
-      records.some(
-        (record) => record.status === "ERROR" || record.status === "TIMED_OUT",
-      );
-    const failureDetails = records.flatMap((record) => [
-      ...record.assertions
-        .filter((assertion) => assertion.status === "failed")
-        .map(
-          (assertion) =>
-            `${assertion.name}: ${assertion.failureMessages.join("\n")}`,
-        ),
-      ...(record.status !== "PASSED"
-        ? [
-            `${record.id}: ${record.reportError ?? record.status}${record.exitCode !== null ? ` (exit ${record.exitCode})` : ""}`,
-          ]
-        : []),
-    ]);
-    const evaluation = evaluationResultSchema.parse({
-      typecheck:
-        typecheck?.status === "PASSED"
-          ? "PASSED"
-          : typecheck?.status === "FAILED"
-            ? "FAILED"
-            : "NOT_RUN",
-      unitTests: countAssertions(unitAssertions),
-      integrationTests: countAssertions(integrationAssertions),
-      publicTests: countAssertions(publicAssertions),
-      contractTests: countAssertions(contracts?.assertions ?? []),
-      forbiddenFilesChanged: scope.forbiddenFilesChanged,
-      scopeAdherence: scope.record.status === "PASSED" ? "PASSED" : "FAILED",
-      criticalFailure,
-      overallResult: hasFailure
-        ? "FAILED"
-        : incomplete
-          ? "REVIEW_REQUIRED"
-          : "PASSED",
-      checksRun:
-        records.length === 4
-          ? ["TYPECHECK", "UNIT", "INTEGRATION", "CONTRACT", "SCOPE"]
-          : ["SCOPE"],
-      failureDetails,
-      validationDurationMs: Math.round(performance.now() - validationStart),
-      checkRecords: records,
-    });
+    const { evaluation, scope } = await evaluateWorkspace(workspace);
     return {
       id: randomUUID(),
       source: "BENCHMARK_EXECUTION" as const,
@@ -132,3 +57,84 @@ export async function evaluateBenchmark(input: unknown) {
 export const deterministicEvaluator: DeterministicEvaluator = {
   evaluate: evaluateBenchmark,
 };
+
+export async function evaluateWorkspace(workspace: BenchmarkWorkspace) {
+  const validationStart = performance.now();
+  const scopeBefore = await checkScope(workspace);
+  const records: CheckRecord[] = [];
+  // Sequential and fixed. We retain public/contract evidence even when typecheck fails.
+  if (scopeBefore.record.status === "PASSED") {
+    for (const check of ["TYPECHECK", "PUBLIC", "CONTRACT"] as const)
+      records.push(await runCheck(check, workspace));
+  }
+  const scope = await checkScope(workspace);
+  records.push(scope.record);
+  const typecheck = records.find((record) => record.id === "TYPECHECK");
+  const publicCheck = records.find((record) => record.id === "PUBLIC");
+  const contracts = records.find((record) => record.id === "CONTRACT");
+  const publicAssertions = publicCheck?.assertions ?? [];
+  const unitAssertions = publicAssertions.filter(
+    (assertion) => assertion.file === "public/tests/pagination.test.ts",
+  );
+  const integrationAssertions = publicAssertions.filter(
+    (assertion) => assertion.file !== "public/tests/pagination.test.ts",
+  );
+  // Critical means an observed legacy API contract regression, never an inference from a process error.
+  const criticalFailure =
+    contracts?.assertions.some(
+      (assertion) =>
+        assertion.status === "failed" &&
+        assertion.name.includes(paginationBenchmark.criticalAssertionMarker),
+    ) ?? false;
+  const hasFailure =
+    records.some((record) => record.status === "FAILED") ||
+    publicAssertions.some((a) => a.status === "failed") ||
+    contracts?.assertions.some((a) => a.status === "failed");
+  const incomplete =
+    records.length !== 4 ||
+    records.some(
+      (record) => record.status === "ERROR" || record.status === "TIMED_OUT",
+    );
+  const failureDetails = records.flatMap((record) => [
+    ...record.assertions
+      .filter((assertion) => assertion.status === "failed")
+      .map(
+        (assertion) =>
+          `${assertion.name}: ${assertion.failureMessages.join("\n")}`,
+      ),
+    ...(record.status !== "PASSED"
+      ? [
+          `${record.id}: ${record.reportError ?? record.status}${record.exitCode !== null ? ` (exit ${record.exitCode})` : ""}`,
+        ]
+      : []),
+  ]);
+  const evaluation = evaluationResultSchema.parse({
+    typecheck:
+      typecheck?.status === "PASSED"
+        ? "PASSED"
+        : typecheck?.status === "FAILED"
+          ? "FAILED"
+          : "NOT_RUN",
+    unitTests: countAssertions(unitAssertions),
+    integrationTests: countAssertions(integrationAssertions),
+    publicTests: countAssertions(publicAssertions),
+    contractTests: countAssertions(contracts?.assertions ?? []),
+    forbiddenFilesChanged: scope.forbiddenFilesChanged,
+    scopeAdherence: scope.record.status === "PASSED" ? "PASSED" : "FAILED",
+    criticalFailure,
+    overallResult: hasFailure
+      ? "FAILED"
+      : incomplete
+        ? "REVIEW_REQUIRED"
+        : "PASSED",
+    checksRun:
+      records.length === 4
+        ? ["TYPECHECK", "UNIT", "INTEGRATION", "CONTRACT", "SCOPE"]
+        : ["SCOPE"],
+    failureDetails,
+    validationDurationMs: Math.round(performance.now() - validationStart),
+    checkRecords: records,
+  });
+
+  return { evaluation, scope };
+}

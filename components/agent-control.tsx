@@ -1,0 +1,134 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { agentConfigurations } from "@/lib/agent/configs";
+import { realRunSchema, type AgentRequest } from "@/lib/agent/schemas";
+import { SectionHeading } from "./ui";
+
+export function AgentControl({
+  model,
+  keyConfigured,
+}: {
+  model: string;
+  keyConfigured: boolean;
+}) {
+  const router = useRouter();
+  const [configId, setConfigId] =
+    useState<AgentRequest["configId"]>("baseline");
+  const [running, setRunning] = useState(false);
+  const [error, setError] = useState("");
+  const config = agentConfigurations[configId];
+  async function run() {
+    setRunning(true);
+    setError("");
+    try {
+      const response = await fetch("/api/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId: "customers-pagination", configId }),
+      });
+      const payload = await response.json();
+      if (!response.ok)
+        throw new Error(
+          typeof payload.error === "string"
+            ? payload.error
+            : "Agent request failed.",
+        );
+      const result = realRunSchema.parse(payload);
+      router.push(`/agent/runs/${result.id}`);
+      router.refresh();
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "Agent request failed.",
+      );
+    } finally {
+      setRunning(false);
+    }
+  }
+  return (
+    <section className="panel">
+      <SectionHeading
+        eyebrow="ONE CLICK · ONE ATTEMPT"
+        title="Run a controlled task"
+      />
+      <div className="card-content agent-controls">
+        <div className="info-strip">
+          Controlled benchmark environment. Gemini proposes code; independent
+          checks decide acceptance. Each attempt starts from the unchanged
+          baseline. No automatic retries or interventions.
+        </div>
+        <label>
+          Task
+          <select
+            disabled={running}
+            value="customers-pagination"
+            onChange={() => {}}
+          >
+            <option value="customers-pagination">
+              Add pagination support to GET /customers.
+            </option>
+          </select>
+        </label>
+        <label>
+          Agent configuration
+          <select
+            disabled={running}
+            value={configId}
+            onChange={(event) =>
+              setConfigId(event.target.value as AgentRequest["configId"])
+            }
+          >
+            <option value="baseline">Baseline</option>
+            <option value="context-rich">Context-rich</option>
+          </select>
+        </label>
+        <p>
+          <strong>Model:</strong> {model} · Gemini Developer API
+        </p>
+        <div>
+          <h3>Context supplied</h3>
+          <ul>
+            {config.files.map((file) => (
+              <li key={file}>
+                <code>{file}</code>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <p>
+          <strong>Explicit acceptance criteria:</strong>{" "}
+          {config.acceptanceCriteria.join(" ") || "None supplied."}
+        </p>
+        <p>
+          <strong>Validation requested in prompt:</strong>{" "}
+          {config.requiredChecks.join(" · ")}. Shadowline independently runs all
+          acceptance checks for both configurations.
+        </p>
+        {!keyConfigured && (
+          <p className="text-warn">
+            Configure GEMINI_API_KEY in .env.local on the server, then refresh
+            this page.
+          </p>
+        )}
+        <button
+          className="button primary"
+          onClick={run}
+          disabled={running || !keyConfigured}
+        >
+          {running ? "Running coding agent…" : "Run coding agent"}
+        </button>
+        <p role="status" aria-live="polite">
+          {running
+            ? "Waiting for one model response, then validating paths, evaluating code, and cleaning up. This can take several minutes."
+            : "Results are saved locally and kept separate from fixture metrics."}
+        </p>
+        {error && (
+          <p role="alert" className="text-bad">
+            {error}
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}

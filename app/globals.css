@@ -1874,3 +1874,38 @@ th,
     flex-wrap: wrap;
   }
 }
+
+.agent-controls {
+  display: grid;
+  gap: 18px;
+}
+.agent-controls label {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+}
+.agent-controls select {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: white;
+  max-width: 100%;
+}
+.agent-controls .button {
+  justify-self: start;
+}
+.agent-controls ul {
+  padding-left: 20px;
+  line-height: 1.9;
+}
+.agent-code {
+  max-height: 420px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 14px;
+  background: #f6f8fa;
+  font-size: 12px;
+  line-height: 1.65;
+  margin: 12px 0;
+}

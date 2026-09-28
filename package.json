@@ -13,7 +13,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "benchmark:setup": "npm ci --prefix benchmark-repo --ignore-scripts",
-    "benchmark:verify": "node --import tsx scripts/verify-benchmark.ts"
+    "benchmark:verify": "node --import tsx scripts/verify-benchmark.ts",
+    "agent:run": "node --import tsx scripts/run-agent.ts"
   },
   "engines": {
     "node": ">=22"

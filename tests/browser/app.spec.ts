@@ -105,3 +105,16 @@ test("execution controls and endpoint are disabled in production", async ({
   });
   expect(response.status()).toBe(404);
 });
+
+test("real agent execution is unavailable in production", async ({
+  request,
+}) => {
+  expect((await request.get("/agent")).status()).toBe(404);
+  expect(
+    (
+      await request.post("/api/agent", {
+        data: { taskId: "customers-pagination", configId: "baseline" },
+      })
+    ).status(),
+  ).toBe(404);
+});

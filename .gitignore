@@ -6,4 +6,7 @@ playwright-report/
 test-results/
 *.tsbuildinfo
 .env*
+!.env.example
+.env.local
+.shadowline/
 .DS_Store

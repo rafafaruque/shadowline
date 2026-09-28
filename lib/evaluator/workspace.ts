@@ -37,6 +37,8 @@ export interface BenchmarkWorkspace {
   baselineFingerprint: string;
   patchFingerprint: string | null;
   patchId: PatchId;
+  acceptance: boolean;
+  generatedCode: boolean;
 }
 
 /** Hash regular files; reject links in editable source. */
@@ -60,7 +62,10 @@ export async function snapshotFiles(
   return snapshot;
 }
 
-async function prepareWorkspace(patchId: PatchId): Promise<BenchmarkWorkspace> {
+async function prepareWorkspace(
+  patchId: PatchId,
+  agentMode = false,
+): Promise<BenchmarkWorkspace> {
   benchmarkRequestSchema.shape.patchId.parse(patchId);
   const project = process.cwd();
   const benchmark = path.join(project, "benchmark-repo");
@@ -120,6 +125,8 @@ async function prepareWorkspace(patchId: PatchId): Promise<BenchmarkWorkspace> {
         path.join(source, "src/routes/customers.ts"),
         replacement,
       );
+    }
+    if (patchId !== "baseline" || agentMode) {
       await cp(
         path.join(project, "benchmarks/public-tests"),
         path.join(harness, "public/task"),
@@ -180,6 +187,8 @@ async function prepareWorkspace(patchId: PatchId): Promise<BenchmarkWorkspace> {
       baselineFingerprint,
       patchFingerprint,
       patchId,
+      acceptance: patchId !== "baseline" || agentMode,
+      generatedCode: agentMode,
     };
   } catch (error) {
     await rm(root, { recursive: true, force: true });
@@ -193,6 +202,17 @@ export async function withBenchmarkWorkspace<T>(
   work: (workspace: BenchmarkWorkspace) => Promise<T>,
 ): Promise<T> {
   const workspace = await prepareWorkspace(patchId);
+  try {
+    return await work(workspace);
+  } finally {
+    await rm(workspace.root, { recursive: true, force: true, maxRetries: 3 });
+  }
+}
+
+export async function withAgentWorkspace<T>(
+  work: (workspace: BenchmarkWorkspace) => Promise<T>,
+): Promise<T> {
+  const workspace = await prepareWorkspace("baseline", true);
   try {
     return await work(workspace);
   } finally {

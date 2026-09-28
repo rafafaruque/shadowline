@@ -18,7 +18,10 @@ const links = [
   { href: "/runs", label: "Benchmark runs", icon: Activity },
   { href: "/experiments", label: "Experiments", icon: FlaskConical },
   ...(process.env.NODE_ENV === "development"
-    ? [{ href: "/verification", label: "Verification", icon: ShieldCheck }]
+    ? [
+        { href: "/verification", label: "Verification", icon: ShieldCheck },
+        { href: "/agent", label: "Coding agent", icon: GitBranch },
+      ]
     : []),
 ];
 export function AppSidebar() {
@@ -72,21 +75,27 @@ export function AppSidebar() {
       </div>
       <div className="sidebar-bottom">
         <span className="fixture-dot" />
-        {pathname === "/verification" ? "Local verification" : "Fixture mode"}
-        <span className="version">v0.2</span>
+        {pathname.startsWith("/agent")
+          ? "Real agent runs"
+          : pathname === "/verification"
+            ? "Local verification"
+            : "Fixture mode"}
+        <span className="version">v0.3</span>
       </div>
     </aside>
   );
 }
 export function Topbar() {
   const pathname = usePathname();
-  const section = pathname.startsWith("/verification")
-    ? "Benchmark verification"
-    : pathname.startsWith("/experiments")
-      ? "Experiments"
-      : pathname.startsWith("/runs")
-        ? "Benchmark runs"
-        : "Overview";
+  const section = pathname.startsWith("/agent")
+    ? "Coding agent"
+    : pathname.startsWith("/verification")
+      ? "Benchmark verification"
+      : pathname.startsWith("/experiments")
+        ? "Experiments"
+        : pathname.startsWith("/runs")
+          ? "Benchmark runs"
+          : "Overview";
   return (
     <div className="topbar">
       <div className="breadcrumbs">
@@ -99,7 +108,7 @@ export function Topbar() {
           <GitBranch size={13} />
           shadowline-benchmark
         </span>
-        <span className="demo-tag">PHASE 02 · PROTOTYPE</span>
+        <span className="demo-tag">PHASE 03 · PROTOTYPE</span>
       </div>
     </div>
   );
@@ -111,7 +120,7 @@ export function EvidenceFooter() {
     <footer className="app-footer">
       <span>
         <span className="fixture-dot" />
-        {pathname === "/verification"
+        {pathname === "/verification" || pathname.startsWith("/agent")
           ? "Live benchmark evidence · aggregate dashboards remain fixtures"
           : "All results are illustrative fixtures"}
       </span>

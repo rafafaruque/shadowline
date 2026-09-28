@@ -8,7 +8,7 @@ Coding agents increase implementation throughput, but uniform review requirement
 
 ## Run locally
 
-Node.js 22 or newer and npm are required. No environment variables or API keys are needed.
+Node.js 22 or newer and npm are required. Fixture views and known-patch verification need no API key. Real agent execution currently requires macOS with working `sandbox-exec` and a Gemini Developer API key.
 
 ```sh
 npm ci
@@ -53,15 +53,16 @@ flowchart LR
   V --> P[Task-level autonomy policy]
 ```
 
-**AI proposes; deterministic software verifies.** The agent, diagnosis, and automatic intervention portions of this diagram are still planned. Controlled patch evaluation now works.
+**AI proposes; deterministic software verifies.** Coding-agent generation and controlled patch evaluation work. Diagnosis and automatic interventions remain planned.
 
 ## Current prototype status
 
-| Phase                                                   | Status          |
-| ------------------------------------------------------- | --------------- |
-| Phase 1: Fixture-driven product/UI                      | COMPLETE        |
-| Phase 2: Controlled benchmark + deterministic evaluator | COMPLETE        |
-| Phase 3: Coding-agent generation                        | NOT IMPLEMENTED |
+| Phase                                                   | Status                                        |
+| ------------------------------------------------------- | --------------------------------------------- |
+| Phase 1: Fixture-driven product/UI                      | COMPLETE                                      |
+| Phase 2: Controlled benchmark + deterministic evaluator | COMPLETE                                      |
+| Phase 3: Real coding-agent execution                    | IMPLEMENTED; completed model response pending |
+| Phase 4: Failure diagnosis + intervention experiments   | NOT IMPLEMENTED                               |
 
 Implemented:
 
@@ -73,7 +74,7 @@ Implemented:
 - A small Hono customer API, existing pagination helper, public tests, independent contracts, and two known patches.
 - Fresh temporary workspaces, fixed validation commands, structured output, file-scope checks, and cleanup.
 
-No database, LLM integration, real coding agent, diagnosis model, automatic intervention, or persistence exists. The original “Apply intervention & rerun” button remains disabled. Real verification results are returned separately and never update fixture metrics.
+Gemini generates structured file replacements server-side. Real attempts persist in local JSON and are inspectable at `/agent`; deterministic checks own acceptance. No database, diagnosis model, automatic intervention, or automatic retry exists. The original fixture “Apply intervention & rerun” button remains disabled. Real agent runs and known-patch verification never update fixture aggregate metrics.
 
 ## Prove the evaluator
 
@@ -92,7 +93,7 @@ The baseline intentionally has no pagination yet; its smaller suite checks repos
 
 The CLI prints captured stdout/stderr, exit codes, counts, timing, fingerprints, and cleanup status. Its exit code checks the **expected outcome**, so a correctly detected breaking patch is a successful verification demonstration. Setup installs locked dependencies once with lifecycle scripts disabled; subsequent runs reuse them without installs or network calls.
 
-Only reviewed, checked-in patches are accepted. Temporary directories are not an OS sandbox for arbitrary generated code; see [controlled execution](docs/decisions/003-controlled-execution.md).
+The Phase 2 endpoint accepts only reviewed, checked-in patches. The separate real-agent path executes generated application code through an OS-restricted worker; see [agent trust boundary](docs/decisions/004-agent-trust-boundary.md).
 
 Dashboard metrics are calculated from the twelve inspectable attempts. Experiment cohorts (100 attempts per arm) and category history are separate authored fixtures; neither is inferred from the run table. Costs are illustrative USD estimates. Details and denominators are in [architecture](docs/architecture.md).
 
@@ -105,10 +106,36 @@ Dashboard metrics are calculated from the twelve inspectable attempts. Experimen
 - `lib/evaluator/benchmark.ts`: the single task's evaluator-owned requirements.
 - `benchmark-repo/`: customer API, conventions, pagination utility, and public/hidden tests.
 - `benchmarks/`: controlled route replacements and public pagination acceptance tests.
-- `lib/agent/`, `lib/diagnosis/`: interfaces only.
+- `lib/agent/`: explicit context builder, generic provider interface, Gemini REST adapter, path validation, execution, and local JSON store.
+- `lib/evaluator/{sandbox.ts,bridge.mjs,worker.mjs}`: restricted application subprocess and trusted test transport.
+- `lib/diagnosis/`: future interface only.
 - `lib/policy/autonomy.ts`: risk-aware placeholder policy.
 - `docs/`: [product](docs/product.md), [architecture](docs/architecture.md), and [decisions](docs/decisions/001-deterministic-evaluation.md).
 
-## Planned next milestone
+## Run the real coding agent
 
-Connect one coding-agent adapter that returns file changes only, using the same pagination task and public context. Add the execution isolation needed for untrusted generated code, preserve the protected harness and command allowlist, then evaluate the returned patch against the same baseline. Keep diagnosis and automatic interventions for a later milestone.
+Create `.env.local` from `.env.example` and set `GEMINI_API_KEY` locally. Never use a `NEXT_PUBLIC_` key. The key is used only in the server's Gemini request header; generated code receives a minimal environment without credentials.
+
+`SHADOWLINE_MODEL` defaults to `gemini-3.7-flash`. Google's [pricing](https://ai.google.dev/gemini-api/docs/pricing) lists it as free-tier eligible and suited to coding. Use a free-tier Google AI Studio project; model eligibility does not establish your project's billing tier. Quota/authentication errors are recorded without automatic retry, model fallback, or billing upgrade. Free-tier requests use Google's applicable data-use terms. Only the selected benchmark context is sent.
+
+Open http://localhost:3000/agent, select Baseline or Context-rich, and click **Run coding agent**. Alternatively:
+
+```sh
+npm run agent:run -- baseline
+# A separate, explicitly requested experiment:
+npm run agent:run -- context-rich
+```
+
+Each invocation makes one model request and starts from the unchanged benchmark. No evaluator feedback goes back to the model. Both configurations receive the same independent acceptance checks. Baseline supplies exactly `src/app.ts`, `src/routes/customers.ts`, `src/data/customers.ts`, and `tests/customers.test.ts`. It excludes the conventions document, pagination helper, explicit compatibility criterion, and hidden tests. Context-rich adds the conventions and helper, the historical-array criterion, and requested contract/integration validation. The UI preserves exact contents, hashes, criteria, prompts, before/replacement code, rejected/applied paths, checks, and review policy.
+
+Actual provider usage includes thinking tokens in output. Inference cost remains null unless all three optional operator rate variables are configured; confirmed free-tier operators can explicitly set all rates to zero. Remediation effort remains null. No ROI is inferred.
+
+Real records live in git-ignored `.shadowline/runs/<uuid>.json` with owner-only file permissions. Attempt numbers are scoped to task + configuration + provider + requested model. First-pass acceptance is true only when the first non-provider-error coding attempt passes all checks. `PROVIDER_ERROR` covers upstream API/transport failures, with null evaluation and first-pass acceptance; these requests are excluded from coding failures, benchmark failures, and autonomy evidence. Request numbering still includes outages for transparency. Historical 3.8 API failures are classified as provider errors on read; their original JSON files remain unchanged. A file lock serializes UI/CLI attempts. Persistence is local, unencrypted, and single-machine; it is not a database or tamper-proof audit log. Deleting records also deletes attempt history.
+
+If the host is forcibly stopped, a `RUNNING` record, temporary workspace, or `.shadowline/runs/.attempt.lock` may remain. Confirm the recorded PID is no longer executing before removing that lock and starting a new attempt. An interrupted run never becomes a pass automatically. Detail pages can be refreshed while an attempt runs. Production returns 404 for agent pages and the API; run the UI with `npm run dev`. Stop an existing dev server before browser tests because Next uses one development build lock.
+
+The first request/result and integration correction are documented in [Phase 3 evidence](docs/phase3-first-run.md).
+
+## Next milestone
+
+Phase 4 should run explicitly initiated baseline/context-rich experiments from the same baseline with the same checks. Preserve all attempts and compare observed acceptance, review requirements, regressions, and cost before adding failure-diagnosis hypotheses or interventions. One generated patch is not evidence of a population reliability improvement.

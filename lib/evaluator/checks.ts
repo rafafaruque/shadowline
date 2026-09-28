@@ -6,6 +6,7 @@ import { z } from "zod";
 import { paginationBenchmark } from "./benchmark";
 import { snapshotFiles, type BenchmarkWorkspace } from "./workspace";
 import type { CheckRecord } from "./types";
+import { sandboxProfile } from "./sandbox";
 
 const TIMEOUT_MS = 30_000;
 const OUTPUT_LIMIT = 64 * 1024;
@@ -57,6 +58,26 @@ async function execute(
   workspace: BenchmarkWorkspace,
 ): Promise<CheckRecord> {
   const command = commandFor(id, workspace);
+  // Static imports/reference directives must not read arbitrary host files either.
+  const restrictedCompiler = id === "TYPECHECK" && workspace.generatedCode;
+  const executable = restrictedCompiler
+    ? "/usr/bin/sandbox-exec"
+    : process.execPath;
+  const args = restrictedCompiler
+    ? [
+        "-p",
+        sandboxProfile(
+          [
+            workspace.source,
+            workspace.dependencies,
+            path.join(workspace.harness, "tsconfig.json"),
+          ],
+          path.join(workspace.root, "application-scratch"),
+        ),
+        process.execPath,
+        ...command.args,
+      ]
+    : command.args;
   const start = performance.now();
   return new Promise((resolve) => {
     let stdout = "";
@@ -64,8 +85,8 @@ async function execute(
     let outputTruncated = false;
     let timedOut = false;
     let spawnError: string | undefined;
-    const child = spawn(process.execPath, command.args, {
-      cwd: workspace.harness,
+    const child = spawn(executable, args, {
+      cwd: restrictedCompiler ? workspace.source : workspace.harness,
       shell: false,
       detached: process.platform !== "win32",
       stdio: ["ignore", "pipe", "pipe"],
@@ -218,7 +239,7 @@ export async function runCheck(
     return record;
   const expected =
     paginationBenchmark.expectedTests[
-      workspace.patchId === "baseline" ? "baseline" : "pagination"
+      workspace.acceptance ? "pagination" : "baseline"
     ];
   try {
     const report = await readFile(
@@ -272,8 +293,9 @@ export async function checkScope(workspace: BenchmarkWorkspace): Promise<{
   ]
     .filter((file) => workspace.baselineFiles[file] !== current[file])
     .sort();
-  const allowed: readonly string[] =
-    workspace.patchId === "baseline" ? [] : paginationBenchmark.allowedFiles;
+  const allowed: readonly string[] = workspace.acceptance
+    ? paginationBenchmark.allowedFiles
+    : [];
   const forbiddenFilesChanged = filesChanged.filter(
     (file) => !allowed.includes(file),
   );
