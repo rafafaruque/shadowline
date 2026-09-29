@@ -1,14 +1,20 @@
 import type { RealAgentRun } from "../agent/schemas";
-import { RunStore } from "../agent/store";
-import { ExperimentStore } from "../experiments/store";
+import type { RunStore } from "../agent/store";
+import type { ExperimentStore } from "../experiments/store";
+import { evidenceReaders } from "../evidence/readers";
 
 export const engagementExperimentId = "1ede9ceb-1c45-4d5f-9c39-9b638f65216d";
 
 // Read-only access to the saved experiment. Never substitute fixture measurements.
 export async function loadEngagementEvidence(
-  experiments: Pick<ExperimentStore, "get"> = new ExperimentStore(),
-  runs: Pick<RunStore, "get"> = new RunStore(),
+  experiments?: Pick<ExperimentStore, "get">,
+  runs?: Pick<RunStore, "get">,
 ) {
+  if (!experiments || !runs) {
+    const readers = await evidenceReaders();
+    experiments ??= readers.experiments;
+    runs ??= readers.runs;
+  }
   const experiment = await experiments.get(engagementExperimentId);
   if (!experiment || !experiment.interventionRunId)
     return { available: false as const };

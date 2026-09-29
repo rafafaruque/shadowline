@@ -1,15 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeading, SectionHeading, Badge } from "@/components/ui";
-import { ExperimentStore } from "@/lib/experiments/store";
-import { RunStore } from "@/lib/agent/store";
+import { evidenceReaders } from "@/lib/evidence/readers";
+import { canViewRealEvidence, isDemoMode } from "@/lib/demo-mode";
+import { DemoEvidenceNote } from "@/components/demo-evidence-note";
 import { DiagnoseButton } from "@/components/experiment-controls";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Real experiments" };
 export default async function RealExperimentsPage() {
-  if (process.env.NODE_ENV !== "development") notFound();
-  const records = await new ExperimentStore().list();
-  const baselines = (await new RunStore().list()).filter(
+  if (!canViewRealEvidence()) notFound();
+  const readers = await evidenceReaders();
+  const records = await readers.experiments.list();
+  const baselines = (await readers.runs.list()).filter(
     (run) =>
       run.configId === "baseline" && run.status === "FAILED" && run.evaluation,
   );
@@ -20,6 +22,7 @@ export default async function RealExperimentsPage() {
         title="Real intervention experiments"
         description="Diagnose a failure, review a proposed change to the agent's inputs, and let the same tests measure what happened."
       />
+      <DemoEvidenceNote />
       <section className="panel">
         <SectionHeading title="Saved experiments" />
         <div className="card-content">
@@ -51,7 +54,7 @@ export default async function RealExperimentsPage() {
                 {run.id} · {run.evaluation!.publicTests?.failed} public failures
                 · {run.evaluation!.contractTests.failed} contract failures
               </p>
-              <DiagnoseButton baselineRunId={run.id} />
+              <DiagnoseButton baselineRunId={run.id} readOnly={isDemoMode()} />
             </div>
           ))}
           {!baselines.length && (

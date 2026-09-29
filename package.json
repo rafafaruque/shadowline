@@ -10,6 +10,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "node --import tsx --test tests/*.test.ts",
     "test:e2e": "playwright test",
+    "test:demo": "playwright test --config playwright.demo.config.ts",
+    "demo:export": "node --import tsx scripts/export-demo-evidence.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "benchmark:setup": "npm ci --prefix benchmark-repo --ignore-scripts",

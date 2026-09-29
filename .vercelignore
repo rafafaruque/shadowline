@@ -1,0 +1,12 @@
+.git
+.shadowline
+.codex
+.env*
+!.env.example
+.next
+node_modules
+benchmark-repo/node_modules
+test-results
+playwright-demo-results
+playwright-report
+*.tsbuildinfo

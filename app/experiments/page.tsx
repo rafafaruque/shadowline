@@ -5,6 +5,7 @@ import { ExperimentChart } from "@/components/experiment-chart";
 import { PageHeading, SectionHeading } from "@/components/ui";
 import { experiment } from "@/lib/fixtures/experiments";
 import { money, percent } from "@/lib/format";
+import { canViewRealEvidence, isDemoMode } from "@/lib/demo-mode";
 export const metadata: Metadata = { title: "Experiments" };
 
 export default function ExperimentsPage() {
@@ -64,13 +65,14 @@ export default function ExperimentsPage() {
           <FlaskConical size={14} />1 illustrative experiment
         </span>
       </PageHeading>
-      {process.env.NODE_ENV === "development" && (
+      {canViewRealEvidence() && (
         <section className="panel">
           <SectionHeading title="Real intervention experiments" />
           <div className="card-content">
             <p>
-              Inspect AI failure hypotheses, approve repository-context
-              interventions, and compare actual deterministic results.
+              {isDemoMode()
+                ? "Inspect the recorded failure hypothesis, approved intervention, and real deterministic before/after results."
+                : "Inspect AI failure hypotheses, approve repository-context interventions, and compare actual deterministic results."}
             </p>
             <Link className="button primary" href="/experiments/real">
               Open real experiments

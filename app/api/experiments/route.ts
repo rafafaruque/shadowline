@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
 import { experimentActionSchema } from "@/lib/experiments/schemas";
-import {
-  approveIntervention,
-  diagnoseBaseline,
-  editIntervention,
-  executeIntervention,
-} from "@/lib/experiments/service";
+import { isDemoMode, demoNotice } from "@/lib/demo-mode";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
+  if (isDemoMode())
+    return NextResponse.json({ error: demoNotice }, { status: 403 });
   if (process.env.NODE_ENV !== "development")
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   let origin: URL;
@@ -66,6 +63,12 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   try {
+    const {
+      approveIntervention,
+      diagnoseBaseline,
+      editIntervention,
+      executeIntervention,
+    } = await import("@/lib/experiments/service");
     const action = parsed.data;
     const record =
       action.action === "diagnose"

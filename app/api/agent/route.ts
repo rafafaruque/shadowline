@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runCodingAgent } from "@/lib/agent/coding-agent";
+import { isDemoMode, demoNotice } from "@/lib/demo-mode";
 import { agentRequestSchema } from "@/lib/agent/schemas";
 
 export const runtime = "nodejs";
@@ -7,6 +7,8 @@ export const dynamic = "force-dynamic";
 let inFlight = false;
 
 export async function POST(request: Request) {
+  if (isDemoMode())
+    return NextResponse.json({ error: demoNotice }, { status: 403 });
   if (process.env.NODE_ENV !== "development")
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   // Next's internal request URL may normalize 127.0.0.1 to localhost.
@@ -78,6 +80,7 @@ export async function POST(request: Request) {
     );
   inFlight = true;
   try {
+    const { runCodingAgent } = await import("@/lib/agent/coding-agent");
     return NextResponse.json(await runCodingAgent(parsed.data), {
       headers: { "Cache-Control": "no-store" },
     });

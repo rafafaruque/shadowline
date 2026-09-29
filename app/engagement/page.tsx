@@ -12,6 +12,7 @@ import {
 } from "@/lib/experiments/comparison";
 import type { RealAgentRun } from "@/lib/agent/schemas";
 import styles from "./page.module.css";
+import { canViewRealEvidence } from "@/lib/demo-mode";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Northstar Software" };
@@ -360,7 +361,7 @@ export default async function EngagementPage() {
                   the separate diagnosis step and human approval time. No review
                   duration, remediation time, or customer savings were measured.
                 </p>
-                {process.env.NODE_ENV === "development" ? (
+                {canViewRealEvidence() ? (
                   <Link
                     className="text-link"
                     href={`/experiments/real/${engagementExperimentId}`}

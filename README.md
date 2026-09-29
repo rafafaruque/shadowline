@@ -24,7 +24,7 @@ Contract checks protect existing APIs; isolated, curated coding context excludes
 
 ### Real experiment
 
-The engagement reads the saved Phase 4 experiment `1ede9ceb-1c45-4d5f-9c39-9b638f65216d` and its two real run records. It uses no fixture fallback: without the local records, measurements are unavailable. The summary is read-only in development and production; full run inspection and execution remain development-only.
+The engagement reads the saved Phase 4 experiment `1ede9ceb-1c45-4d5f-9c39-9b638f65216d` and its two real run records. Local mode reads `.shadowline`; hosted demo mode reads the bundled public snapshot. There is no fixture fallback. Full run inspection is available in development and hosted demo mode; execution remains local-development-only.
 
 | Measured evidence      | Baseline                | Context-rich            |
 | ---------------------- | ----------------------- | ----------------------- |
@@ -77,6 +77,35 @@ npm run test:e2e
 ```
 
 The browser suite starts production on port 3100 and development on port 3101. It expects a completed build and installed benchmark dependencies. It preserves the original route/filter/navigation/mobile checks and additionally verifies real patch evaluation, request restrictions, and the production-disabled execution route.
+
+## Public Vercel demo
+
+The hosted deployment is **read-only**. Reviewers can browse the dashboard, fixture runs, Northstar engagement, `/architecture`, `/agent` recorded runs, `/experiments/real`, and complete real run/experiment evidence. It displays: “Live agent execution is disabled in the hosted demo. This deployment contains recorded outputs from real local benchmark runs.” Measured results, fixture aggregates, and illustrative customer assumptions remain distinct.
+
+1. Commit the application changes **including `data/demo/evidence.json`** and import the repository into Vercel. Use the **Next.js** framework preset and the repository root.
+2. Use **`npm ci`** for installation and **`npm run build`** for the build; leave the output directory at the Next.js default. Use a Vercel-supported Node.js version satisfying `package.json` (`>=22`). Do not run `benchmark:setup`, tests that execute benchmarks, `agent:run`, or diagnosis/export scripts as deployment build steps.
+3. In Vercel Project Settings → Environment Variables, set **`SHADOWLINE_DEMO_MODE=true`** for **Production and Preview**, then deploy/redeploy. This is the **only required environment variable**; there is no `NEXT_PUBLIC_` counterpart. [Vercel environment variable documentation](https://vercel.com/docs/environment-variables).
+4. Do **not** configure Gemini/OpenAI API keys, Codex credentials, CLI paths, or model/cost overrides for the demo. The deployment needs no local `.env.local`, `.shadowline` store, benchmark dependencies, Codex installation, macOS sandbox, or writable application filesystem. `.vercelignore` also excludes local credentials/state from CLI uploads.
+5. Verify `/engagement`, `/experiments/real/1ede9ceb-1c45-4d5f-9c39-9b638f65216d`, and both linked real runs. `/verification` explains local-only execution and links to saved results. Execution, diagnosis, intervention edits, approvals, and reruns return **403** in demo mode, even if called directly or while `NODE_ENV=development`.
+
+`SHADOWLINE_DEMO_MODE=false` or unset preserves the existing local-development behavior and local stores. Non-demo production retains the existing 404 protection for execution pages/APIs. The flag is server-side and passed as a boolean to navigation/controls; it is not a client-controlled authorization setting. No live provider is contacted in demo mode.
+
+### Bundled evidence and provenance
+
+`data/demo/evidence.json` is a static server-bundled snapshot of **eight actual local attempts** (the failed baseline, passing context-rich run, and six provider errors) and **one approved real experiment**. Nothing is generated at build time. Historical Gemini 3.8 errors retain their original bytes locally and raw statuses in the snapshot; the existing compatibility reader labels them `PROVIDER_ERROR` without counting them as coding failures. Baseline: **7/11 public, 2/16 contract, FAILED, 19.429s, 3,720 tokens**. Context-rich: **11/11 public, 16/16 contract, PASSED, 11.187s, 4,221 tokens**. Costs remain unknown.
+
+Only local repository and temporary workspace paths in recorded logs are redacted in the public copies. Outcomes, generated code, prompts, approval evidence, timing, and usage are otherwise preserved. The manifest records original-file SHA-256 and public-record SHA-256 (over compact `JSON.stringify(record)`); saved prompt/approval/baseline hashes refer to local originals. Original `.shadowline` records are never rewritten. The snapshot is intentionally public evidence, not a credentials or local-state export.
+
+To deliberately refresh this reviewed snapshot locally, run `npm run demo:export`, inspect the diff, then format `data/demo/evidence.json` with Prettier before committing. The exporter uses an explicit record-ID allowlist, validates schemas, redacts paths, and rejects credential-like values. It never runs an agent or evaluator and is **not** part of the build or runtime. New local runs are not automatically published.
+
+### Hosted demo validation
+
+```sh
+SHADOWLINE_DEMO_MODE=true npm run build
+npm run test:demo
+```
+
+The additional browser suite uses production port 3102 with demo mode on, blank provider credentials, a nonexistent Codex binary, and a runtime guard that rejects child processes and local-only file access. It verifies real evidence, all inspection views, disabled controls, direct mutation rejection, and mobile layout. Run the original `npm run test:e2e` with demo mode false/unset to retain the existing local execution checks. Unit tests also load the bundle from an empty working directory to verify that `.shadowline` files and writes are unnecessary.
 
 ## Core workflow
 
@@ -179,7 +208,7 @@ Gemini usage includes thinking tokens in output. Gemini inference cost remains n
 
 Real records live in git-ignored `.shadowline/runs/<uuid>.json` with owner-only file permissions. Attempt numbers are scoped to task + configuration + provider + requested model. First-pass acceptance is true only when the first non-provider-error coding attempt passes all checks. `PROVIDER_ERROR` covers upstream API/transport failures, with null evaluation and first-pass acceptance; these requests are excluded from coding failures, benchmark failures, and autonomy evidence. Request numbering still includes outages for transparency. Historical 3.8 API failures are classified as provider errors on read; their original JSON files remain unchanged. A file lock serializes UI/CLI attempts. Persistence is local, unencrypted, and single-machine; it is not a database or tamper-proof audit log. Deleting records also deletes attempt history.
 
-If the host is forcibly stopped, a `RUNNING` record, temporary workspace, or `.shadowline/runs/.attempt.lock` may remain. Confirm the recorded PID is no longer executing before removing that lock and starting a new attempt. An interrupted run never becomes a pass automatically. Detail pages can be refreshed while an attempt runs. Production returns 404 for agent pages and the API; run the UI with `npm run dev`. Stop an existing dev server before browser tests because Next uses one development build lock.
+If the host is forcibly stopped, a `RUNNING` record, temporary workspace, or `.shadowline/runs/.attempt.lock` may remain. Confirm the recorded PID is no longer executing before removing that lock and starting a new attempt. An interrupted run never becomes a pass automatically. Detail pages can be refreshed while an attempt runs. Non-demo production returns 404 for agent pages and the API; hosted demo mode exposes recorded views with mutations blocked. Use `npm run dev` with demo mode false/unset for local execution. Stop an existing dev server before browser tests because Next uses one development build lock.
 
 The Gemini requests are documented in [Phase 3 evidence](docs/phase3-first-run.md). Initial Codex integration and offline checks are documented in [Codex run evidence](docs/phase3-codex-run.md). The subsequent real baseline `4b299b77-b63f-4ee3-ae13-06c5e0d2f956` succeeded at generation, passed typecheck, and failed acceptance (public 7/11; contracts 2/16), with no critical regression and human review required.
 
@@ -218,7 +247,7 @@ To create a new diagnosis only (not a coding rerun):
 npm run experiment:diagnose -- <failed-baseline-run-id>
 ```
 
-Experiments are stored separately in `.shadowline/experiments/<uuid>.json`, with baseline byte hashes, protected-input digests, exact prompts, approval provenance, and linked coding-run IDs. They remain local and development-only. The successful baseline used `codex-cli 0.155.0-alpha.16.3`; this machine pins `SHADOWLINE_CODEX_BIN` to that installed, sandbox-compatible executable. The newly installed CLI 0.158.0 failed managed-preferences startup inside the unchanged sandbox, before generation. No sandbox protections were relaxed.
+Experiments are stored separately in `.shadowline/experiments/<uuid>.json`, with baseline byte hashes, protected-input digests, exact prompts, approval provenance, and linked coding-run IDs. Execution and edits remain local and development-only; explicitly exported records are inspectable in the read-only hosted demo. The successful baseline used `codex-cli 0.155.0-alpha.16.3`; this machine pins `SHADOWLINE_CODEX_BIN` to that installed, sandbox-compatible executable. The newly installed CLI 0.158.0 failed managed-preferences startup inside the unchanged sandbox, before generation. No sandbox protections were relaxed.
 
 See [ADR 006](docs/decisions/006-diagnosis-and-interventions.md): AI-generated diagnosis is a hypothesis; deterministic re-evaluation validates interventions. A passing pair supports this intervention on this benchmark, not universal diagnosis accuracy, population reliability, or autonomous production deployment.
 

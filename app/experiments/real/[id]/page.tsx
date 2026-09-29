@@ -2,8 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeading, SectionHeading, Badge } from "@/components/ui";
 import { ExperimentControls } from "@/components/experiment-controls";
-import { RunStore } from "@/lib/agent/store";
-import { ExperimentStore } from "@/lib/experiments/store";
+import { evidenceReaders } from "@/lib/evidence/readers";
+import { canViewRealEvidence, isDemoMode } from "@/lib/demo-mode";
+import { DemoEvidenceNote } from "@/components/demo-evidence-note";
 import {
   experimentConclusion,
   measuredRows,
@@ -16,10 +17,11 @@ export default async function RealExperimentPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  if (process.env.NODE_ENV !== "development") notFound();
-  const record = await new ExperimentStore().get((await params).id);
+  if (!canViewRealEvidence()) notFound();
+  const readers = await evidenceReaders();
+  const record = await readers.experiments.get((await params).id);
   if (!record) notFound();
-  const store = new RunStore();
+  const store = readers.runs;
   const baseline = await store.get(record.baselineRunId);
   if (!baseline) notFound();
   const after = record.interventionRunId
@@ -39,6 +41,7 @@ export default async function RealExperimentPage({
           All real experiments
         </Link>
       </PageHeading>
+      <DemoEvidenceNote />
       <section className="panel">
         <SectionHeading eyebrow="1 · OBSERVED FAILURE" title="What failed?">
           <Badge value={baseline.status} />
@@ -108,6 +111,7 @@ export default async function RealExperimentPage({
           <ExperimentControls
             key={`${record.id}:${record.revision}`}
             experiment={record}
+            readOnly={isDemoMode()}
           />
           {record.intervention && (
             <>

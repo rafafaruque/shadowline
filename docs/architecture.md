@@ -2,6 +2,14 @@
 
 **AI proposes; deterministic software verifies.**
 
+## Read-only hosted demo
+
+`SHADOWLINE_DEMO_MODE=true` selects `lib/evidence/bundled.ts` through the read-only evidence reader interface. A static import of `data/demo/evidence.json` packages reviewed real records into the server build; no `.shadowline` directory or runtime writes are needed. The snapshot retains baseline/context-rich outcomes and provider-error history, with local machine paths redacted and source/public-copy hashes recorded. Authored fixture aggregates and illustrative Northstar assumptions remain separate sources.
+
+The server renders the hosted notice and passes a boolean to controls/navigation. Real run and experiment pages are inspectable in demo production; `/architecture` summarizes the existing boundaries. Mutation endpoints reject demo requests before reading payloads or dynamically importing local execution services. Codex availability is not probed. Diagnosis, editing, approval, and benchmark execution controls are disabled. No model call or evaluator subprocess runs while building or serving the demo.
+
+With the flag false/unset, evidence readers use the unchanged local stores and development execution behavior remains available. Non-demo production keeps its prior 404 execution gates. The exporter is an explicit local maintenance command, never a build or runtime hook. See the README for deployment and validation commands.
+
 ## Product shell and data boundaries
 
 The Next.js App Router retains the Phase 1 fixture dashboard, run explorer, details, and experiments. Phase 2 adds a development-only `/verification` page and `/api/benchmark` POST endpoint that execute real checks. Zod validates domain data and evaluator request/response boundaries. The interface displays actual benchmark executions separately from authored aggregates. Phase 3 adds server-side Gemini and Codex CLI providers, `/agent`, `/agent/runs/[id]`, and `/api/agent`, with local JSON persistence for real attempts. No database is required. Development and production builds continue to use Webpack because Turbopack's CSS worker hit a local port restriction during Phase 1.

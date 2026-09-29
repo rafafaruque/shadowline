@@ -2,8 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge, PageHeading, SectionHeading } from "@/components/ui";
 import { RunResultSummary } from "@/components/run-result-summary";
-import { RunStore } from "@/lib/agent/store";
-import { ExperimentStore } from "@/lib/experiments/store";
+import { evidenceReaders } from "@/lib/evidence/readers";
+import { canViewRealEvidence, isDemoMode } from "@/lib/demo-mode";
+import { DemoEvidenceNote } from "@/components/demo-evidence-note";
 import { DiagnoseButton } from "@/components/experiment-controls";
 
 export const dynamic = "force-dynamic";
@@ -13,10 +14,11 @@ export default async function AgentRunPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  if (process.env.NODE_ENV !== "development") notFound();
-  const run = await new RunStore().get((await params).id);
+  if (!canViewRealEvidence()) notFound();
+  const readers = await evidenceReaders();
+  const run = await readers.runs.get((await params).id);
   if (!run) notFound();
-  const experiments = (await new ExperimentStore().list()).filter(
+  const experiments = (await readers.experiments.list()).filter(
     (record) =>
       record.baselineRunId === run.id || record.interventionRunId === run.id,
   );
@@ -31,6 +33,7 @@ export default async function AgentRunPage({
           All real runs
         </Link>
       </PageHeading>
+      <DemoEvidenceNote />
       {(experiments.length > 0 ||
         (run.configId === "baseline" &&
           run.status === "FAILED" &&
@@ -54,7 +57,10 @@ export default async function AgentRunPage({
               run.status === "FAILED" &&
               run.evaluation &&
               experiments.length === 0 && (
-                <DiagnoseButton baselineRunId={run.id} />
+                <DiagnoseButton
+                  baselineRunId={run.id}
+                  readOnly={isDemoMode()}
+                />
               )}
           </div>
         </section>
@@ -157,8 +163,10 @@ export default async function AgentRunPage({
                   Exit: {check.exitCode ?? "none"} · {check.reportError}
                 </p>
                 <pre className="agent-code">
-                  {check.stdout}
-                  {check.stderr}
+                  <code>
+                    {check.stdout}
+                    {check.stderr}
+                  </code>
                 </pre>
               </details>
             ))}

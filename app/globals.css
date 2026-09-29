@@ -1,5 +1,33 @@
 @import "tailwindcss";
 
+.demo-notice,
+.demo-evidence-note {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #f0f4ee;
+  color: #53624f;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.demo-notice {
+  margin-bottom: 24px;
+}
+.architecture-flow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  padding-left: 18px;
+}
+.architecture-flow li {
+  padding: 8px;
+}
+@media (max-width: 700px) {
+  .architecture-flow {
+    grid-template-columns: 1fr;
+  }
+}
+
 @theme inline {
   --color-background: #f7f8f7;
   --color-foreground: #23312b;

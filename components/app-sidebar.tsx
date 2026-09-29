@@ -11,6 +11,8 @@ import {
   Layers3,
   PanelLeft,
   ShieldCheck,
+  Building2,
+  Workflow,
 } from "lucide-react";
 
 const links = [
@@ -24,8 +26,18 @@ const links = [
       ]
     : []),
 ];
-export function AppSidebar() {
+export function AppSidebar({ demoMode = false }: { demoMode?: boolean }) {
   const pathname = usePathname();
+  const visibleLinks = demoMode
+    ? [
+        ...links.filter(
+          (link) => !["/verification", "/agent"].includes(link.href),
+        ),
+        { href: "/engagement", label: "Customer engagement", icon: Building2 },
+        { href: "/agent", label: "Recorded agent runs", icon: GitBranch },
+        { href: "/architecture", label: "Architecture", icon: Workflow },
+      ]
+    : links;
   return (
     <aside className="sidebar">
       <Link href="/" className="brand" aria-label="Shadowline home">
@@ -38,13 +50,13 @@ export function AppSidebar() {
         <span className="workspace-avatar">S</span>
         <div>
           <strong>Engineering workspace</strong>
-          <span>Local benchmark</span>
+          <span>{demoMode ? "Hosted · read-only" : "Local benchmark"}</span>
         </div>
         <PanelLeft size={14} />
       </div>
       <div className="nav-label">WORKSPACE</div>
       <nav aria-label="Main navigation">
-        {links.map(({ href, label, icon: Icon }) => {
+        {visibleLinks.map(({ href, label, icon: Icon }) => {
           const active =
             href === "/" ? pathname === href : pathname.startsWith(href);
           return (
@@ -75,15 +87,17 @@ export function AppSidebar() {
       </div>
       <div className="sidebar-bottom">
         <span className="fixture-dot" />
-        {pathname === "/engagement"
-          ? "Customer engagement"
-          : pathname.startsWith("/experiments/real")
-            ? "Real experiments"
-            : pathname.startsWith("/agent")
-              ? "Real agent runs"
-              : pathname === "/verification"
-                ? "Local verification"
-                : "Fixture mode"}
+        {demoMode
+          ? "Hosted demo"
+          : pathname === "/engagement"
+            ? "Customer engagement"
+            : pathname.startsWith("/experiments/real")
+              ? "Real experiments"
+              : pathname.startsWith("/agent")
+                ? "Real agent runs"
+                : pathname === "/verification"
+                  ? "Local verification"
+                  : "Fixture mode"}
         <span className="version">v0.4</span>
       </div>
     </aside>
@@ -92,17 +106,19 @@ export function AppSidebar() {
 export function Topbar() {
   const pathname = usePathname();
   const section =
-    pathname === "/engagement"
-      ? "Customer engagement"
-      : pathname.startsWith("/agent")
-        ? "Coding agent"
-        : pathname.startsWith("/verification")
-          ? "Benchmark verification"
-          : pathname.startsWith("/experiments")
-            ? "Experiments"
-            : pathname.startsWith("/runs")
-              ? "Benchmark runs"
-              : "Overview";
+    pathname === "/architecture"
+      ? "Architecture"
+      : pathname === "/engagement"
+        ? "Customer engagement"
+        : pathname.startsWith("/agent")
+          ? "Coding agent"
+          : pathname.startsWith("/verification")
+            ? "Benchmark verification"
+            : pathname.startsWith("/experiments")
+              ? "Experiments"
+              : pathname.startsWith("/runs")
+                ? "Benchmark runs"
+                : "Overview";
   return (
     <div className="topbar">
       <div className="breadcrumbs">
@@ -121,19 +137,23 @@ export function Topbar() {
   );
 }
 
-export function EvidenceFooter() {
+export function EvidenceFooter({ demoMode = false }: { demoMode?: boolean }) {
   const pathname = usePathname();
   return (
     <footer className="app-footer">
       <span>
         <span className="fixture-dot" />
-        {pathname === "/engagement"
-          ? "Illustrative customer assumptions · saved real benchmark evidence"
-          : pathname === "/verification" ||
-              pathname.startsWith("/agent") ||
-              pathname.startsWith("/experiments/real")
-            ? "Live benchmark evidence · aggregate dashboards remain fixtures"
-            : "All results are illustrative fixtures"}
+        {pathname === "/architecture"
+          ? "Architecture · AI proposes, deterministic software verifies"
+          : pathname === "/engagement"
+            ? "Illustrative customer assumptions · saved real benchmark evidence"
+            : pathname === "/verification" ||
+                pathname.startsWith("/agent") ||
+                pathname.startsWith("/experiments/real")
+              ? demoMode
+                ? "Recorded real benchmark evidence · aggregate dashboards remain fixtures"
+                : "Live benchmark evidence · aggregate dashboards remain fixtures"
+              : "All results are illustrative fixtures"}
       </span>
       <span>AI proposes. Deterministic software verifies.</span>
     </footer>

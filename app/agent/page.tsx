@@ -3,15 +3,22 @@ import { notFound } from "next/navigation";
 import { AgentControl } from "@/components/agent-control";
 import { Badge, PageHeading, SectionHeading } from "@/components/ui";
 import { configuredModel } from "@/lib/agent/provider";
-import { RunStore } from "@/lib/agent/store";
-import { codexAvailability } from "@/lib/agent/codex-cli";
+import { evidenceReaders } from "@/lib/evidence/readers";
+import { canViewRealEvidence, isDemoMode } from "@/lib/demo-mode";
+import { DemoEvidenceNote } from "@/components/demo-evidence-note";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Coding agent" };
 export default async function AgentPage() {
-  if (process.env.NODE_ENV !== "development") notFound();
-  const runs = await new RunStore().list();
-  const codex = await codexAvailability();
+  if (!canViewRealEvidence()) notFound();
+  const demo = isDemoMode();
+  const runs = await (await evidenceReaders()).runs.list();
+  const codex = demo
+    ? {
+        ready: false,
+        message: "Local Codex CLI execution is disabled in the hosted demo.",
+      }
+    : await (await import("@/lib/agent/codex-cli")).codexAvailability();
   const geminiReady = Boolean(process.env.GEMINI_API_KEY?.trim());
   return (
     <div className="benchmark-verification">
@@ -20,25 +27,39 @@ export default async function AgentPage() {
         title="Coding agent"
         description="Inspect what the model knew, what it changed, and whether deterministic checks accepted it."
       />
-      <AgentControl
-        providers={[
-          {
-            id: "gemini",
-            name: "Gemini Developer API",
-            model: configuredModel("gemini"),
-            ready: geminiReady,
-            message: geminiReady
-              ? "Uses the server-side Gemini API key."
-              : "Configure GEMINI_API_KEY in .env.local on the server, then refresh this page.",
-          },
-          {
-            id: "codex-cli",
-            name: "Codex CLI",
-            model: configuredModel("codex-cli"),
-            ...codex,
-          },
-        ]}
-      />
+      <DemoEvidenceNote />
+      {demo ? (
+        <section className="panel card-content">
+          <h2>Recorded coding-agent attempts</h2>
+          <p>
+            Inspect saved inputs, generated files, provider outcomes, and
+            deterministic checks below.
+          </p>
+          <button className="button secondary" disabled>
+            Live coding-agent execution disabled
+          </button>
+        </section>
+      ) : (
+        <AgentControl
+          providers={[
+            {
+              id: "gemini",
+              name: "Gemini Developer API",
+              model: configuredModel("gemini"),
+              ready: geminiReady,
+              message: geminiReady
+                ? "Uses the server-side Gemini API key."
+                : "Configure GEMINI_API_KEY in .env.local on the server, then refresh this page.",
+            },
+            {
+              id: "codex-cli",
+              name: "Codex CLI",
+              model: configuredModel("codex-cli"),
+              ...codex,
+            },
+          ]}
+        />
+      )}
       <section className="panel">
         <SectionHeading title="Real agent runs" />
         <div className="card-content">

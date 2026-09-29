@@ -23,7 +23,13 @@ async function post(action: unknown) {
   if (!response.ok) throw new Error(body.error ?? "Experiment request failed.");
   return experimentSchema.parse(body);
 }
-export function DiagnoseButton({ baselineRunId }: { baselineRunId: string }) {
+export function DiagnoseButton({
+  baselineRunId,
+  readOnly = false,
+}: {
+  baselineRunId: string;
+  readOnly?: boolean;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -31,8 +37,9 @@ export function DiagnoseButton({ baselineRunId }: { baselineRunId: string }) {
     <div>
       <button
         className="button primary"
-        disabled={busy}
+        disabled={busy || readOnly}
         onClick={async () => {
+          if (readOnly) return;
           setBusy(true);
           setError("");
           try {
@@ -52,8 +59,10 @@ export function DiagnoseButton({ baselineRunId }: { baselineRunId: string }) {
           : "Diagnose & propose intervention"}
       </button>
       <p role="status">
-        {error ||
-          "One diagnosis request. No coding attempt runs until an engineer approves."}
+        {readOnly
+          ? "Diagnosis is disabled in the hosted demo. Inspect the saved experiment instead."
+          : error ||
+            "One diagnosis request. No coding attempt runs until an engineer approves."}
       </p>
     </div>
   );
@@ -61,8 +70,10 @@ export function DiagnoseButton({ baselineRunId }: { baselineRunId: string }) {
 
 export function ExperimentControls({
   experiment,
+  readOnly = false,
 }: {
   experiment: RealExperiment;
+  readOnly?: boolean;
 }) {
   const router = useRouter();
   const [record, setRecord] = useState(experiment);
@@ -73,7 +84,7 @@ export function ExperimentControls({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   if (!draft || !record.intervention) return null;
-  const editable = ["DRAFT", "APPROVED"].includes(record.status);
+  const editable = !readOnly && ["DRAFT", "APPROVED"].includes(record.status);
   const dirty =
     JSON.stringify(draft) !== JSON.stringify(record.intervention.draft);
   const update = (next: InterventionDraft) => {
@@ -81,6 +92,7 @@ export function ExperimentControls({
     setReviewed(false);
   };
   async function act(action: unknown) {
+    if (readOnly) return;
     setBusy(true);
     setMessage("");
     try {
@@ -268,8 +280,9 @@ export function ExperimentControls({
       )}
       {!editable && (
         <p>
-          Execution is {record.status.toLowerCase()}. This experiment cannot
-          start another attempt.
+          {readOnly
+            ? "Recorded intervention — editing, approval, and execution are disabled in the hosted demo."
+            : `Execution is ${record.status.toLowerCase()}. This experiment cannot start another attempt.`}
         </p>
       )}
       <p role="status">
