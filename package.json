@@ -14,7 +14,8 @@
     "format:check": "prettier --check .",
     "benchmark:setup": "npm ci --prefix benchmark-repo --ignore-scripts",
     "benchmark:verify": "node --import tsx scripts/verify-benchmark.ts",
-    "agent:run": "node --import tsx scripts/run-agent.ts"
+    "agent:run": "node --import tsx scripts/run-agent.ts",
+    "experiment:diagnose": "node --import tsx scripts/diagnose-run.ts"
   },
   "engines": {
     "node": ">=22"

@@ -16,6 +16,8 @@ import {
 import {
   agentProposalSchema,
   agentRequestSchema,
+  contextSnapshotSchema,
+  type ContextSnapshot,
   type RealAgentRun,
 } from "./schemas";
 import { RunStore } from "./store";
@@ -25,7 +27,15 @@ import { createProvider } from "./providers";
 /** Internal dependencies support deterministic tests; neither is accepted from HTTP. */
 export async function runCodingAgent(
   input: unknown,
-  dependencies?: { provider: ModelProvider; store: RunStore; model: string },
+  dependencies?: {
+    provider: ModelProvider;
+    store: RunStore;
+    model: string;
+    context?: ContextSnapshot;
+    runId?: string;
+    experimentId?: string;
+    parentRunId?: string;
+  },
 ) {
   const request = agentRequestSchema.parse(input);
   const provider = dependencies?.provider ?? createProvider(request.providerId);
@@ -33,7 +43,15 @@ export async function runCodingAgent(
   assertSandboxAvailable();
   return store.exclusive(async () => {
     const model = dependencies?.model ?? configuredModel(request.providerId);
-    const context = await buildContext(request.configId, model);
+    const context = dependencies?.context
+      ? contextSnapshotSchema.parse(dependencies.context)
+      : await buildContext(request.configId, model);
+    if (context.model !== model || context.configId !== request.configId)
+      throw new Error("Approved context does not match this run.");
+    if (dependencies?.runId && (await store.get(dependencies.runId)))
+      throw new Error(
+        "This run ID already exists; execution will not be repeated.",
+      );
     const prior = (await store.list()).filter(
       (run) =>
         run.taskId === request.taskId &&
@@ -43,7 +61,13 @@ export async function runCodingAgent(
     );
     const start = Date.now();
     const run: RealAgentRun = {
-      id: randomUUID(),
+      id: dependencies?.runId ?? randomUUID(),
+      ...(dependencies?.experimentId
+        ? {
+            experimentId: dependencies.experimentId,
+            parentRunId: dependencies.parentRunId,
+          }
+        : {}),
       source: "REAL_AGENT",
       taskId: request.taskId,
       configId: request.configId,

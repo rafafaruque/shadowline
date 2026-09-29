@@ -98,11 +98,17 @@ Generated code is never imported into the trusted test process. Public/contract 
 
 The development API accepts only task/config IDs, same-origin loopback JSON requests, and a 1 KiB body. It accepts no credentials, model identifier, file content, commands, or paths from the browser. A cross-process filesystem lock serializes attempts. Local atomic JSON records are inspectable after restart but are not encrypted or immutable. Forced termination may leave incomplete records/locks; recovery is documented in README.
 
-Model usage is measured when returned; missing usage/cost/remediation remains null. Optional explicit operator rates allow estimates, including confirmed zero-cost free-tier operation. No ROI, diagnosis, recommendation, or intervention is generated. Fixture aggregates remain authored and separate.
+Model usage is measured when returned; missing usage/cost/remediation remains null. Optional explicit operator rates allow estimates, including confirmed zero-cost free-tier operation. No ROI is inferred. Fixture aggregates remain authored and separate.
 
-## Future Phase 4
+## Phase 4: Real hypotheses and approved interventions
 
-Controlled repeated baseline/context-rich experiments should preserve task identity, checks, baseline fingerprints, model versions, and all attempts. Diagnosis may then propose evidence-backed hypotheses; it cannot change verdicts. A multivariable intervention demonstrates a combined effect and cannot isolate which added input caused it. Autonomy recommendations remain downstream of reliability evidence.
+`lib/diagnosis/real.ts` assembles exact baseline context, generated replacements, bounded failure summaries, and repository intent for one structured diagnosis request. The same generic transport accepts a trusted caller-selected output schema; Zod validates classifications, explanation, evidence references, and the recommendation. No model can modify evaluation results. The original baseline JSON is preserved byte-for-byte; `lib/experiments/store.ts` stores linked diagnosis and experiment evidence separately.
+
+The editable intervention combines the original task/files with selected repository-intent additions. Fixed context and criteria catalogs prevent arbitrary diagnostic text, hidden assertions, or file paths entering the coding prompt. Rationale remains review evidence. An explicit approval binds the saved proposal and exact input contents; editing invalidates it. Execution is separate and can consume that approval only once, including provider outages or interrupted runs. Baseline-record and protected-input hashes guard comparability. The existing generated-code validator, sandbox, and evaluator remain unchanged.
+
+Development-only `/experiments/real` pages answer what failed, the AI hypothesis, the approved input change, the observed re-evaluation, and justified conclusions. `/api/experiments` has strict bounded same-origin actions. UI requests cannot supply providers, models, commands, test content, or arbitrary paths. Actual result, file, usage, cost, timing, first-pass, review, and critical-failure measurements come from the two linked coding runs; unavailable values stay unknown. Diagnosis overhead is separate.
+
+A passing pair supports the combined intervention on this benchmark. It cannot establish universal diagnosis truth or isolate which added input mattered; model sampling variability remains a confounder. Autonomy recommendations remain downstream of broader reliability evidence. See [ADR 006](decisions/006-diagnosis-and-interventions.md).
 
 ## Visible evidence and fixture denominators
 
@@ -131,4 +137,4 @@ These thresholds are illustrative and uncalibrated. Category-wide reliability ca
 
 ## Next implementation boundary
 
-Keep Phase 4 experiments explicit and comparable before adding diagnosis and intervention automation. Extending execution beyond this local macOS demo requires a maintained container/VM boundary with resource limits. No queues, vector database, microservices, authentication, or deployment abstraction is part of this prototype.
+Collect repeated, explicitly approved comparisons before generalizing reliability or introducing intervention automation. Extending execution beyond this local macOS demo requires a maintained container/VM boundary with resource limits. No queues, vector database, microservices, authentication, or deployment abstraction is part of this prototype.

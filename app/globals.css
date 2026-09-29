@@ -1909,3 +1909,77 @@ th,
   line-height: 1.65;
   margin: 12px 0;
 }
+.intervention-editor {
+  display: grid;
+  gap: 16px;
+}
+.intervention-editor fieldset {
+  min-width: 0;
+  border: 1px solid var(--border, #d7dce3);
+  padding: 16px;
+  border-radius: 8px;
+}
+.intervention-editor legend {
+  padding: 0 6px;
+  font-weight: 650;
+}
+.choice-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 10px 0;
+  overflow-wrap: anywhere;
+}
+.choice-row input {
+  flex: 0 0 auto;
+  margin-top: 4px;
+}
+.rationale-field {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+}
+.rationale-field textarea {
+  width: 100%;
+  min-width: 0;
+  resize: vertical;
+  padding: 12px;
+  border: 1px solid var(--border, #d7dce3);
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 400;
+}
+.evidence-comparison {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+.evidence-comparison caption {
+  text-align: left;
+  font-weight: 650;
+  margin-bottom: 12px;
+}
+.evidence-comparison th,
+.evidence-comparison td {
+  border-bottom: 1px solid var(--border, #d7dce3);
+  padding: 12px;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.real-experiment .table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.real-experiment .evidence-comparison {
+  min-width: 560px;
+}
+.experiment-conclusion {
+  font-size: 16px;
+  line-height: 1.6;
+}
+.experiment-baseline + .experiment-baseline {
+  border-top: 1px solid var(--border, #d7dce3);
+  padding-top: 20px;
+  margin-top: 20px;
+}

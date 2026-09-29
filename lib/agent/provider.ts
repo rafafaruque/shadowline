@@ -16,7 +16,10 @@ export interface ProviderResult {
 }
 export interface ModelProvider {
   readonly id: string;
-  generate(context: ContextSnapshot): Promise<ProviderResult>;
+  generate(
+    context: ContextSnapshot,
+    options?: { outputSchema: Record<string, unknown> },
+  ): Promise<ProviderResult>;
 }
 /** Upstream transport/API failure, not a generated-code outcome. */
 export class ProviderError extends Error {
@@ -74,7 +77,7 @@ export function geminiProvider(): ModelProvider {
     );
   return {
     id: "gemini",
-    async generate(context) {
+    async generate(context, options) {
       if (!/^gemini-[a-z0-9.-]+$/.test(context.model))
         throw new Error("Invalid Gemini model identifier.");
       let response: Response;
@@ -100,7 +103,9 @@ export function geminiProvider(): ModelProvider {
                 responseFormat: {
                   text: {
                     mimeType: "APPLICATION_JSON",
-                    schema: z.toJSONSchema(agentProposalSchema),
+                    schema:
+                      options?.outputSchema ??
+                      z.toJSONSchema(agentProposalSchema),
                   },
                 },
               },

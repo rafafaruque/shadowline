@@ -49,6 +49,8 @@ export const realRunSchema = z.object({
   model: z.string(),
   resolvedModel: z.string().nullable(),
   responseId: z.string().nullable(),
+  experimentId: z.string().uuid().optional(),
+  parentRunId: z.string().uuid().optional(),
   providerMetadata: z
     .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
     .optional(),

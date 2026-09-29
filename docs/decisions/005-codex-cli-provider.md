@@ -1,6 +1,6 @@
 # ADR 005: Local Codex CLI as a proposal provider
 
-Status: implemented; live completion remains unverified after the first attempt's adapter error.
+Status: implemented. The first attempt's adapter error is preserved; subsequent live baseline generation and the [approved context-rich experiment](../phase4-real-experiment.md) completed with CLI `0.155.0-alpha.16.3`.
 
 ## Decision
 

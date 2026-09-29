@@ -53,16 +53,16 @@ flowchart LR
   V --> P[Task-level autonomy policy]
 ```
 
-**AI proposes; deterministic software verifies.** Coding-agent generation and controlled patch evaluation work. Diagnosis and automatic interventions remain planned.
+**AI proposes; deterministic software verifies.** Real coding-agent generation, AI failure hypotheses, editable intervention review, explicit human approval, and deterministic re-evaluation are implemented. Recommendations never execute automatically.
 
 ## Current prototype status
 
-| Phase                                                   | Status                                        |
-| ------------------------------------------------------- | --------------------------------------------- |
-| Phase 1: Fixture-driven product/UI                      | COMPLETE                                      |
-| Phase 2: Controlled benchmark + deterministic evaluator | COMPLETE                                      |
-| Phase 3: Real coding-agent execution                    | IMPLEMENTED; completed model response pending |
-| Phase 4: Failure diagnosis + intervention experiments   | NOT IMPLEMENTED                               |
+| Phase                                                   | Status                                     |
+| ------------------------------------------------------- | ------------------------------------------ |
+| Phase 1: Fixture-driven product/UI                      | COMPLETE                                   |
+| Phase 2: Controlled benchmark + deterministic evaluator | COMPLETE                                   |
+| Phase 3: Real coding-agent execution                    | COMPLETE; real baseline evaluated          |
+| Phase 4: Failure diagnosis + intervention experiments   | COMPLETE; approved context-rich run passed |
 
 Implemented:
 
@@ -74,7 +74,7 @@ Implemented:
 - A small Hono customer API, existing pagination helper, public tests, independent contracts, and two known patches.
 - Fresh temporary workspaces, fixed validation commands, structured output, file-scope checks, and cleanup.
 
-Codex CLI and Gemini generate structured file replacements server-side through the same provider interface. Real attempts persist in local JSON and are inspectable at `/agent`; deterministic checks own acceptance. No database, diagnosis model, automatic intervention, or automatic retry exists. The original fixture “Apply intervention & rerun” button remains disabled. Real agent runs and known-patch verification never update fixture aggregate metrics.
+Codex CLI and Gemini generate structured file replacements server-side through the same provider interface. Real attempts persist in local JSON and are inspectable at `/agent`; deterministic checks own acceptance. Real diagnosis/intervention experiments are available under `/experiments/real` in development. No database, automatic intervention, or automatic retry exists. The original fixture “Apply intervention & rerun” button remains disabled. Real agent runs and known-patch verification never update fixture aggregate metrics.
 
 ## Prove the evaluator
 
@@ -108,7 +108,8 @@ Dashboard metrics are calculated from the twelve inspectable attempts. Experimen
 - `benchmarks/`: controlled route replacements and public pagination acceptance tests.
 - `lib/agent/`: explicit context builder, generic provider interface, Gemini REST and Codex CLI adapters, path validation, execution, and local JSON store.
 - `lib/evaluator/{sandbox.ts,bridge.mjs,worker.mjs}`: restricted application subprocess and trusted test transport.
-- `lib/diagnosis/`: future interface only.
+- `lib/diagnosis/`: bounded evidence builder for real AI failure hypotheses; the older fixture interface remains separate.
+- `lib/experiments/`: structured diagnosis/intervention schemas, approval and execution lifecycle, local evidence store, and measured comparisons.
 - `lib/policy/autonomy.ts`: risk-aware placeholder policy.
 - `docs/`: [product](docs/product.md), [architecture](docs/architecture.md), and [decisions](docs/decisions/001-deterministic-evaluation.md).
 
@@ -138,8 +139,47 @@ Real records live in git-ignored `.shadowline/runs/<uuid>.json` with owner-only 
 
 If the host is forcibly stopped, a `RUNNING` record, temporary workspace, or `.shadowline/runs/.attempt.lock` may remain. Confirm the recorded PID is no longer executing before removing that lock and starting a new attempt. An interrupted run never becomes a pass automatically. Detail pages can be refreshed while an attempt runs. Production returns 404 for agent pages and the API; run the UI with `npm run dev`. Stop an existing dev server before browser tests because Next uses one development build lock.
 
-The Gemini requests are documented in [Phase 3 evidence](docs/phase3-first-run.md). The single Codex attempt, startup-warning parser correction, and offline transport checks are documented in [Codex run evidence](docs/phase3-codex-run.md). No completed live model response has yet been evaluated.
+The Gemini requests are documented in [Phase 3 evidence](docs/phase3-first-run.md). Initial Codex integration and offline checks are documented in [Codex run evidence](docs/phase3-codex-run.md). The subsequent real baseline `4b299b77-b63f-4ee3-ae13-06c5e0d2f956` succeeded at generation, passed typecheck, and failed acceptance (public 7/11; contracts 2/16), with no critical regression and human review required.
+
+## Real diagnosis and intervention experiment
+
+Open [the real experiment](http://127.0.0.1:3000/experiments/real/1ede9ceb-1c45-4d5f-9c39-9b638f65216d) or navigate from **Experiments → Open real experiments**. The baseline page also links its diagnosis evidence. The original baseline record is never rewritten.
+
+The real diagnosis is a **CONTEXT_GAP** hypothesis, with **ACCEPTANCE_CRITERIA** and **VALIDATION_GAP** as secondary classifications. It attributes the invented `limit` API to missing conventions/helper context and underspecified criteria. Supporting evidence, exact diagnostic inputs, and provider usage are inspectable. This explanation cannot change the failed baseline verdict.
+
+The proposed intervention adds `docs/api-conventions.md` and `src/lib/pagination.ts` to the same four baseline files. It adds explicit `page`/`pageSize` semantics, documented helper/response/error-contract guidance, and the compatibility criterion that existing callers retain the historical `Customer[]` response. Requested validation is TYPECHECK, PUBLIC, INTEGRATION, and CONTRACT. The AI recommendation requested three check categories; the engineer draft explicitly adds INTEGRATION to match the existing context-rich configuration. Diagnosis prose, hidden-test failures, and exact hidden assertions never enter the coding prompt. Repository conventions provide intent.
+
+The engineer can edit the selected context, criteria, checks, and rationale, save the proposal, and inspect the exact coding prompt. **Approve intervention** binds approval to that saved proposal. A separate **Run one approved attempt** action starts execution. Editing invalidates approval; stale approval or changed benchmark/evaluator inputs block execution. Each experiment can execute once, including when its provider fails. A crash never authorizes an automatic retry. The comparison displays real before/after measurements, unknown metrics, review requirements, and a bounded interpretation.
+
+After explicit approval of revision 1, exactly one context-rich attempt ran with the same `codex-cli` provider, `gpt-6-astra` model, and benchmark. Run `c0cc3ec2-68b7-43d6-8981-42728a91bd38` passed. No retry was made.
+
+| Measured result                                   | Baseline                  | Context-rich              |
+| ------------------------------------------------- | ------------------------- | ------------------------- |
+| Provider                                          | Succeeded                 | Succeeded                 |
+| Typecheck                                         | Passed                    | Passed                    |
+| Public tests                                      | 7 passed / 4 failed       | 11 passed / 0 failed      |
+| Contract tests                                    | 2 passed / 14 failed      | 16 passed / 0 failed      |
+| Files proposed / applied                          | `src/routes/customers.ts` | `src/routes/customers.ts` |
+| Critical failure                                  | No                        | No                        |
+| Overall                                           | FAILED                    | PASSED                    |
+| Human review required by benchmark                | Yes                       | No                        |
+| First coding attempt accepted (per configuration) | No                        | Yes                       |
+| Coding-attempt runtime                            | 19,429 ms                 | 11,187 ms                 |
+| Tokens (input / output / total)                   | 3,204 / 516 / 3,720       | 3,976 / 245 / 4,221       |
+| Inference cost                                    | Unknown                   | Unknown                   |
+
+Diagnosis separately consumed 17,693 ms and 8,267 reported tokens; its cost is also unknown. Both coding attempts reported zero cached input tokens. The context-rich patch reused the pagination helper and documented error contract. The baseline, benchmark, hidden tests, evaluator, and prior records remain unchanged. This paired result supports the combined intervention on this benchmark; it does not establish universal diagnosis accuracy, general reliability, or which individual input addition caused the improvement. See [the complete real experiment evidence](docs/phase4-real-experiment.md).
+
+To create a new diagnosis only (not a coding rerun):
+
+```sh
+npm run experiment:diagnose -- <failed-baseline-run-id>
+```
+
+Experiments are stored separately in `.shadowline/experiments/<uuid>.json`, with baseline byte hashes, protected-input digests, exact prompts, approval provenance, and linked coding-run IDs. They remain local and development-only. The successful baseline used `codex-cli 0.155.0-alpha.16.3`; this machine pins `SHADOWLINE_CODEX_BIN` to that installed, sandbox-compatible executable. The newly installed CLI 0.158.0 failed managed-preferences startup inside the unchanged sandbox, before generation. No sandbox protections were relaxed.
+
+See [ADR 006](docs/decisions/006-diagnosis-and-interventions.md): AI-generated diagnosis is a hypothesis; deterministic re-evaluation validates interventions. A passing pair supports this intervention on this benchmark, not universal diagnosis accuracy, population reliability, or autonomous production deployment.
 
 ## Next milestone
 
-Phase 4 should run explicitly initiated baseline/context-rich experiments from the same baseline with the same checks. Preserve all attempts and compare observed acceptance, review requirements, regressions, and cost before adding failure-diagnosis hypotheses or interventions. One generated patch is not evidence of a population reliability improvement.
+Collect more explicitly approved, matched experiments before drawing reliability or autonomy conclusions. Preserve failed interventions and provider outages, measure diagnosis overhead separately, and test input changes individually to distinguish their effects from sampling variability.

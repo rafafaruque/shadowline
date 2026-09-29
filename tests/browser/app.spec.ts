@@ -110,6 +110,17 @@ test("real agent execution is unavailable in production", async ({
   request,
 }) => {
   expect((await request.get("/agent")).status()).toBe(404);
+  expect((await request.get("/experiments/real")).status()).toBe(404);
+  expect(
+    (
+      await request.post("/api/experiments", {
+        data: {
+          action: "diagnose",
+          baselineRunId: "00000000-0000-4000-8000-000000000000",
+        },
+      })
+    ).status(),
+  ).toBe(404);
   expect(
     (
       await request.post("/api/agent", {

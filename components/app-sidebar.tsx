@@ -75,12 +75,14 @@ export function AppSidebar() {
       </div>
       <div className="sidebar-bottom">
         <span className="fixture-dot" />
-        {pathname.startsWith("/agent")
-          ? "Real agent runs"
-          : pathname === "/verification"
-            ? "Local verification"
-            : "Fixture mode"}
-        <span className="version">v0.3</span>
+        {pathname.startsWith("/experiments/real")
+          ? "Real experiments"
+          : pathname.startsWith("/agent")
+            ? "Real agent runs"
+            : pathname === "/verification"
+              ? "Local verification"
+              : "Fixture mode"}
+        <span className="version">v0.4</span>
       </div>
     </aside>
   );
@@ -108,7 +110,7 @@ export function Topbar() {
           <GitBranch size={13} />
           shadowline-benchmark
         </span>
-        <span className="demo-tag">PHASE 03 · PROTOTYPE</span>
+        <span className="demo-tag">PHASE 04 · PROTOTYPE</span>
       </div>
     </div>
   );
@@ -120,7 +122,9 @@ export function EvidenceFooter() {
     <footer className="app-footer">
       <span>
         <span className="fixture-dot" />
-        {pathname === "/verification" || pathname.startsWith("/agent")
+        {pathname === "/verification" ||
+        pathname.startsWith("/agent") ||
+        pathname.startsWith("/experiments/real")
           ? "Live benchmark evidence · aggregate dashboards remain fixtures"
           : "All results are illustrative fixtures"}
       </span>

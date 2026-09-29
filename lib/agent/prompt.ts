@@ -9,8 +9,19 @@ export const hash = (content: string) =>
 export async function buildContext(
   configId: AgentRequest["configId"],
   model: string,
+  approvedConfig?: {
+    files: string[];
+    acceptanceCriteria: string[];
+    requiredChecks: string[];
+  },
 ) {
-  const config = agentConfigurations[configId];
+  const config = approvedConfig ?? agentConfigurations[configId];
+  if (
+    config.files.some(
+      (file) => !agentConfigurations["context-rich"].files.includes(file),
+    )
+  )
+    throw new Error("Context file is not in the repository-intent allowlist.");
   const files = await Promise.all(
     config.files.map(async (file) => {
       const content = await readFile(

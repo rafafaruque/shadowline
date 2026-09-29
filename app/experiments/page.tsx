@@ -64,6 +64,20 @@ export default function ExperimentsPage() {
           <FlaskConical size={14} />1 illustrative experiment
         </span>
       </PageHeading>
+      {process.env.NODE_ENV === "development" && (
+        <section className="panel">
+          <SectionHeading title="Real intervention experiments" />
+          <div className="card-content">
+            <p>
+              Inspect AI failure hypotheses, approve repository-context
+              interventions, and compare actual deterministic results.
+            </p>
+            <Link className="button primary" href="/experiments/real">
+              Open real experiments
+            </Link>
+          </div>
+        </section>
+      )}
       <section className="experiment-intro">
         <div>
           <div className="eyebrow">

@@ -148,6 +148,7 @@ export async function withCodexSession<T>(
   context: ContextSnapshot,
   work: (session: CodexSession) => Promise<T>,
   options?: { binary: string; authPath: string },
+  outputSchema?: Record<string, unknown>,
 ) {
   const binary = await realpath(
     options?.binary ?? (await resolveCodexBinary()),
@@ -177,7 +178,7 @@ export async function withCodexSession<T>(
     const instructionsFile = path.join(root, "instructions.txt");
     await writeFile(
       schemaFile,
-      JSON.stringify(z.toJSONSchema(agentProposalSchema)),
+      JSON.stringify(outputSchema ?? z.toJSONSchema(agentProposalSchema)),
       { mode: 0o600 },
     );
     await writeFile(instructionsFile, context.systemPrompt, { mode: 0o600 });
@@ -368,7 +369,7 @@ export function codexCliProvider(options?: {
 }): ModelProvider {
   return {
     id: "codex-cli",
-    async generate(context) {
+    async generate(context, generationOptions) {
       if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,99}$/.test(context.model))
         throw new ProviderError("Invalid Codex model identifier.");
       let result: ProviderResult;
@@ -413,6 +414,7 @@ export function codexCliProvider(options?: {
             };
           },
           options,
+          generationOptions?.outputSchema,
         );
       } catch (error) {
         if (error instanceof ProviderError) throw error;

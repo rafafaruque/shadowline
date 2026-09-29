@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { Badge, PageHeading, SectionHeading } from "@/components/ui";
 import { RunResultSummary } from "@/components/run-result-summary";
 import { RunStore } from "@/lib/agent/store";
+import { ExperimentStore } from "@/lib/experiments/store";
+import { DiagnoseButton } from "@/components/experiment-controls";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Real agent run" };
@@ -14,6 +16,10 @@ export default async function AgentRunPage({
   if (process.env.NODE_ENV !== "development") notFound();
   const run = await new RunStore().get((await params).id);
   if (!run) notFound();
+  const experiments = (await new ExperimentStore().list()).filter(
+    (record) =>
+      record.baselineRunId === run.id || record.interventionRunId === run.id,
+  );
   return (
     <div className="benchmark-verification">
       <PageHeading
@@ -25,6 +31,34 @@ export default async function AgentRunPage({
           All real runs
         </Link>
       </PageHeading>
+      {(experiments.length > 0 ||
+        (run.configId === "baseline" &&
+          run.status === "FAILED" &&
+          run.evaluation)) && (
+        <section className="panel">
+          <SectionHeading title="Diagnosis and intervention evidence" />
+          <div className="card-content">
+            <p>
+              Linked experiment evidence preserves this historical run
+              unchanged. AI diagnoses are hypotheses; only deterministic checks
+              decide acceptance.
+            </p>
+            {experiments.map((record) => (
+              <p key={record.id}>
+                <Link href={`/experiments/real/${record.id}`}>
+                  Inspect real intervention experiment · {record.status}
+                </Link>
+              </p>
+            ))}
+            {run.configId === "baseline" &&
+              run.status === "FAILED" &&
+              run.evaluation &&
+              experiments.length === 0 && (
+                <DiagnoseButton baselineRunId={run.id} />
+              )}
+          </div>
+        </section>
+      )}
       <section className="panel">
         <SectionHeading title="Engineering decision">
           <Badge value={run.status} />
