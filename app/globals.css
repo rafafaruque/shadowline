@@ -221,6 +221,9 @@ code,
   color: #8d9990;
   padding: 0 13px 11px;
 }
+.sidebar > .brand + .nav-label {
+  margin-top: 32px;
+}
 .nav-link {
   min-height: 41px;
   display: flex;
