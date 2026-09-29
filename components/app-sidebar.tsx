@@ -29,13 +29,6 @@ export function AppSidebar({ demoMode = false }: { demoMode?: boolean }) {
         </span>
         shadowline<span className="brand-period">.</span>
       </Link>
-      <div className="workspace">
-        <span className="workspace-avatar">S</span>
-        <div>
-          <strong>Engineering</strong>
-          <span>{demoMode ? "Recorded benchmark" : "Local workspace"}</span>
-        </div>
-      </div>
       <div className="nav-label">WORKSPACE</div>
       <nav aria-label="Main navigation">
         {links.map(({ href, label, icon: Icon }) => (
