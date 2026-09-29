@@ -27,7 +27,11 @@ export default async function AgentRunPage({
   return (
     <div className="workspace-stack">
       <PageHeading
-        title={run.context.task.replace(/\.$/, "")}
+        title={
+          run.taskId === "customers-pagination"
+            ? "Add pagination to GET /customers"
+            : run.context.task.replace(/\.$/, "")
+        }
         description={`${run.configId === "baseline" ? "Baseline" : "Context-rich"} · ${run.provider === "codex-cli" ? "Codex" : run.provider} / ${(run.resolvedModel ?? run.model) === "gpt-6-astra" ? "GPT-6 Astra" : (run.resolvedModel ?? run.model)}`}
       >
         <Badge value={run.status} />

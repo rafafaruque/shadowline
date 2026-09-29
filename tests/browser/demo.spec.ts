@@ -1,8 +1,28 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 const experiment = "/experiments/real/1ede9ceb-1c45-4d5f-9c39-9b638f65216d";
 const baseline = "/agent/runs/4b299b77-b63f-4ee3-ae13-06c5e0d2f956";
 const after = "/agent/runs/c0cc3ec2-68b7-43d6-8981-42728a91bd38";
+
+async function expectHostedShell(page: Page) {
+  const sidebar = page.getByRole("complementary");
+  await expect(sidebar.getByRole("link")).toHaveText([
+    "shadowline.",
+    "Overview",
+    "Runs",
+    "Experiments",
+    "Engagement",
+    "Architecture",
+  ]);
+  await expect(sidebar).not.toContainText("INSPECTION");
+  await expect(page.getByLabel("Hosted demo")).toHaveCount(1);
+  await expect(page.getByLabel("Hosted demo")).toHaveText("Recorded demo");
+  await expect(page.locator(".topbar .breadcrumbs")).toContainText("Workspace");
+  const liveAction =
+    /^(?:Run agent|Run coding agent|Start (?:agent|run)|Execute|Running|Generating)/i;
+  await expect(page.getByRole("button", { name: liveAction })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: liveAction })).toHaveCount(0);
+}
 
 test("hosted demo preserves all inspection views and labels real versus illustrative evidence", async ({
   page,
@@ -15,6 +35,7 @@ test("hosted demo preserves all inspection views and labels real versus illustra
     "/runs",
     "/runs/SL-1042",
     "/experiments",
+    "/experiments/new",
     "/architecture",
     "/agent",
     "/verification",
@@ -27,6 +48,10 @@ test("hosted demo preserves all inspection views and labels real versus illustra
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.getByLabel("Hosted demo")).toContainText("Recorded demo");
   }
+  await page.goto("/experiments");
+  await expect(
+    page.getByRole("link", { name: "New experiment →", exact: true }),
+  ).toHaveAttribute("href", "/experiments/new");
   await page.goto("/");
   const recent = page.getByRole("region", { name: "Recent experiment" });
   await expect(recent).toContainText("11/11 public · 16/16 contract");
@@ -183,8 +208,13 @@ test("primary pages preserve navigation and fit desktop and mobile", async ({
       "/runs/SL-1042",
       "/agent",
       "/verification",
+      "/experiments/new",
+      "/experiments/new?step=setup",
+      `${experiment}/diagnosis`,
+      `${experiment}/setup`,
     ].entries()) {
       await page.goto(route);
+      await expectHostedShell(page);
       const nav = page.getByRole("navigation", { name: "Main navigation" });
       await expect(nav.getByRole("link")).toHaveText([
         "Overview",
@@ -221,6 +251,7 @@ for (const width of [1440, 390]) {
     page.on("pageerror", (error) => errors.push(error.message));
     await page.setViewportSize({ width, height: 900 });
     const inspect = async (step: string) => {
+      await expectHostedShell(page);
       await expect(
         page
           .getByRole("navigation", { name: "Main navigation" })
@@ -254,9 +285,38 @@ for (const width of [1440, 390]) {
     ).toHaveText(["Recent experiment", "Recent runs"]);
     await expect(
       page
-        .getByRole("table", { name: "Recorded real runs" })
-        .locator("tbody tr"),
+        .getByRole("list", { name: "Recent real runs" })
+        .getByRole("listitem"),
     ).toHaveCount(2);
+    const main = page.locator("main");
+    for (const removed of [
+      "Illustrative workflow policy",
+      "Current recommendation",
+      "REAL EXPERIMENT",
+      "Northstar",
+      "Run agent → Verify with tests",
+      "98%",
+      "95%",
+      "86%",
+      "90%",
+      "88%",
+      "72%",
+      "67%",
+    ])
+      await expect(main).not.toContainText(removed);
+    await expect(main.getByRole("table")).toHaveCount(0);
+    await expect(
+      page.getByRole("link", { name: "Start experiment", exact: true }),
+    ).toHaveAttribute("href", "/experiments/new");
+    const recentRuns = page.getByRole("list", { name: "Recent real runs" });
+    await expect(recentRuns.getByRole("link").nth(0)).toHaveAttribute(
+      "href",
+      baseline,
+    );
+    await expect(recentRuns.getByRole("link").nth(1)).toHaveAttribute(
+      "href",
+      after,
+    );
     await expect(
       page.locator("main").getByRole("region", { name: "Recommendation" }),
     ).toHaveCount(0);
@@ -265,12 +325,21 @@ for (const width of [1440, 390]) {
       .getByRole("link", { name: "Start experiment", exact: true })
       .click();
     await expect(page).toHaveURL("/experiments/new");
+    await expect(
+      page.getByRole("heading", { name: "New experiment", exact: true }),
+    ).toBeVisible();
     await inspect("02-task");
     await page.getByRole("link", { name: "Continue →", exact: true }).click();
     await expect(
       page.getByRole("heading", { name: "Agent setup", exact: true }),
     ).toBeVisible();
     await expect(page.getByText("GPT-6 Astra", { exact: false })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Baseline Selected", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Open recorded run →", exact: true }),
+    ).toHaveAttribute("href", baseline);
     await page
       .getByRole("link", { name: /Context-rich.*Select setup/ })
       .click();
@@ -290,6 +359,16 @@ for (const width of [1440, 390]) {
       .getByRole("link", { name: "Open recorded run →", exact: true })
       .click();
     await expect(page).toHaveURL(baseline);
+    await expect(
+      page.getByRole("heading", {
+        name: "Add pagination to GET /customers",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Runs", exact: true }),
+    ).toHaveAttribute("aria-current", "page");
+    await expect(page.locator("main details[open]")).toHaveCount(0);
     await expect(
       page.getByText("Human review required", { exact: true }),
     ).toBeVisible();
@@ -313,6 +392,7 @@ for (const width of [1440, 390]) {
       .getByRole("link", { name: "Diagnose failure →", exact: true })
       .click();
     await expect(page).toHaveURL(`${experiment}/diagnosis`);
+    await expect(page.locator("main details[open]")).toHaveCount(0);
     await expect(page.getByText("Context gap", { exact: true })).toBeVisible();
     await page.getByText("View diagnosis evidence", { exact: true }).click();
     await expect(
@@ -323,6 +403,7 @@ for (const width of [1440, 390]) {
       .getByRole("link", { name: "Review improved setup →", exact: true })
       .click();
     await expect(page).toHaveURL(`${experiment}/setup`);
+    await expect(page.locator("main details[open]")).toHaveCount(0);
     await expect(
       page.getByText("Approved in recorded experiment", { exact: true }),
     ).toBeVisible();
@@ -360,6 +441,7 @@ for (const width of [1440, 390]) {
       .getByRole("link", { name: "View recorded rerun →", exact: true })
       .click();
     await expect(page).toHaveURL(after);
+    await expect(page.locator("main details[open]")).toHaveCount(0);
     await expect(
       page.getByText("Accepted by benchmark checks", { exact: true }),
     ).toBeVisible();
@@ -367,6 +449,8 @@ for (const width of [1440, 390]) {
     await page
       .getByRole("link", { name: "Compare results →", exact: true })
       .click();
+    await expect(page).toHaveURL(experiment);
+    await expect(page.locator("main details[open]")).toHaveCount(0);
     await expect(
       page.getByRole("heading", { name: "Experiment complete", exact: true }),
     ).toBeVisible();
@@ -374,6 +458,15 @@ for (const width of [1440, 390]) {
       name: "Experiment result",
       exact: true,
     });
+    await expect(
+      result.getByRole("row", {
+        name: "Contract tests 2 / 16 16 / 16",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      result.getByRole("row", { name: "Result FAILED PASSED", exact: true }),
+    ).toBeVisible();
     for (const value of [
       "7 / 11",
       "11 / 11",

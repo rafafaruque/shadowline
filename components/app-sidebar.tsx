@@ -20,6 +20,7 @@ const links = [
 ];
 export function AppSidebar({ demoMode = false }: { demoMode?: boolean }) {
   const pathname = usePathname();
+  const activePath = pathname.startsWith("/agent/runs/") ? "/runs" : pathname;
   return (
     <aside className="sidebar">
       <Link href="/" className="brand" aria-label="Shadowline home">
@@ -41,9 +42,9 @@ export function AppSidebar({ demoMode = false }: { demoMode?: boolean }) {
           <Link
             key={href}
             href={href}
-            className={`nav-link ${(href === "/" ? pathname === href : pathname.startsWith(href)) ? "active" : ""}`}
+            className={`nav-link ${(href === "/" ? activePath === href : activePath.startsWith(href)) ? "active" : ""}`}
             aria-current={
-              (href === "/" ? pathname === href : pathname.startsWith(href))
+              (href === "/" ? activePath === href : activePath.startsWith(href))
                 ? "page"
                 : undefined
             }
@@ -53,21 +54,17 @@ export function AppSidebar({ demoMode = false }: { demoMode?: boolean }) {
           </Link>
         ))}
       </nav>
-      {(demoMode || process.env.NODE_ENV === "development") && (
+      {!demoMode && process.env.NODE_ENV === "development" && (
         <div className="secondary-navigation">
-          <div className="nav-label">
-            {demoMode ? "INSPECTION" : "LOCAL TOOLS"}
-          </div>
+          <div className="nav-label">LOCAL TOOLS</div>
           <Link className="nav-link" href="/agent">
             <GitBranch size={15} />
-            {demoMode ? "Coding agent · read-only" : "Coding agent"}
+            Coding agent
           </Link>
-          {!demoMode && (
-            <Link className="nav-link" href="/verification">
-              <ShieldCheck size={15} />
-              Verification
-            </Link>
-          )}
+          <Link className="nav-link" href="/verification">
+            <ShieldCheck size={15} />
+            Verification
+          </Link>
         </div>
       )}
       <div className="sidebar-bottom">
@@ -80,8 +77,9 @@ export function AppSidebar({ demoMode = false }: { demoMode?: boolean }) {
 }
 export function Topbar({ demoMode = false }: { demoMode?: boolean }) {
   const pathname = usePathname();
+  const activePath = pathname.startsWith("/agent/runs/") ? "/runs" : pathname;
   const section =
-    links.find((link) => link.href !== "/" && pathname.startsWith(link.href))
+    links.find((link) => link.href !== "/" && activePath.startsWith(link.href))
       ?.label ??
     (pathname.startsWith("/agent")
       ? "Coding agent"

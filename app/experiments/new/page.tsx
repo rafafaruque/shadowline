@@ -78,7 +78,7 @@ export default async function NewExperimentPage({
                 [
                   "context-rich",
                   "Context-rich",
-                  "+ repository conventions · shared pagination utility · explicit acceptance criteria · required validation",
+                  "Repository conventions + shared utility + explicit acceptance criteria + required validation",
                 ],
               ] as const
             ).map(([id, title, description]) => (
