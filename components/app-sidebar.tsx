@@ -1,43 +1,25 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Activity,
-  ArrowUpRight,
   FlaskConical,
   GitBranch,
   LayoutDashboard,
   Layers3,
-  PanelLeft,
   ShieldCheck,
   Building2,
   Workflow,
 } from "lucide-react";
-
 const links = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
-  { href: "/runs", label: "Benchmark runs", icon: Activity },
+  { href: "/runs", label: "Runs", icon: Activity },
   { href: "/experiments", label: "Experiments", icon: FlaskConical },
-  ...(process.env.NODE_ENV === "development"
-    ? [
-        { href: "/verification", label: "Verification", icon: ShieldCheck },
-        { href: "/agent", label: "Coding agent", icon: GitBranch },
-      ]
-    : []),
+  { href: "/engagement", label: "Engagement", icon: Building2 },
+  { href: "/architecture", label: "Architecture", icon: Workflow },
 ];
 export function AppSidebar({ demoMode = false }: { demoMode?: boolean }) {
   const pathname = usePathname();
-  const visibleLinks = demoMode
-    ? [
-        ...links.filter(
-          (link) => !["/verification", "/agent"].includes(link.href),
-        ),
-        { href: "/engagement", label: "Customer engagement", icon: Building2 },
-        { href: "/agent", label: "Recorded agent runs", icon: GitBranch },
-        { href: "/architecture", label: "Architecture", icon: Workflow },
-      ]
-    : links;
   return (
     <aside className="sidebar">
       <Link href="/" className="brand" aria-label="Shadowline home">
@@ -49,76 +31,63 @@ export function AppSidebar({ demoMode = false }: { demoMode?: boolean }) {
       <div className="workspace">
         <span className="workspace-avatar">S</span>
         <div>
-          <strong>Engineering workspace</strong>
-          <span>{demoMode ? "Hosted · read-only" : "Local benchmark"}</span>
+          <strong>Engineering</strong>
+          <span>{demoMode ? "Recorded benchmark" : "Local workspace"}</span>
         </div>
-        <PanelLeft size={14} />
       </div>
       <div className="nav-label">WORKSPACE</div>
       <nav aria-label="Main navigation">
-        {visibleLinks.map(({ href, label, icon: Icon }) => {
-          const active =
-            href === "/" ? pathname === href : pathname.startsWith(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`nav-link ${active ? "active" : ""}`}
-              aria-current={active ? "page" : undefined}
-            >
-              <Icon size={17} />
-              {label}
-              {active && <span className="active-dot" />}
-            </Link>
-          );
-        })}
+        {links.map(({ href, label, icon: Icon }) => (
+          <Link
+            key={href}
+            href={href}
+            className={`nav-link ${(href === "/" ? pathname === href : pathname.startsWith(href)) ? "active" : ""}`}
+            aria-current={
+              (href === "/" ? pathname === href : pathname.startsWith(href))
+                ? "page"
+                : undefined
+            }
+          >
+            <Icon size={17} />
+            {label}
+          </Link>
+        ))}
       </nav>
-      <div className="sidebar-note">
-        <ShieldCheck size={19} />
-        <strong>Autonomy is earned.</strong>
-        <p>
-          AI proposes.
-          <br />
-          Deterministic software verifies.
-        </p>
-        <Link href="/#autonomy">
-          Explore the evidence <ArrowUpRight size={13} />
-        </Link>
-      </div>
+      {(demoMode || process.env.NODE_ENV === "development") && (
+        <div className="secondary-navigation">
+          <div className="nav-label">
+            {demoMode ? "INSPECTION" : "LOCAL TOOLS"}
+          </div>
+          <Link className="nav-link" href="/agent">
+            <GitBranch size={15} />
+            {demoMode ? "Coding agent · read-only" : "Coding agent"}
+          </Link>
+          {!demoMode && (
+            <Link className="nav-link" href="/verification">
+              <ShieldCheck size={15} />
+              Verification
+            </Link>
+          )}
+        </div>
+      )}
       <div className="sidebar-bottom">
         <span className="fixture-dot" />
-        {demoMode
-          ? "Hosted demo"
-          : pathname === "/engagement"
-            ? "Customer engagement"
-            : pathname.startsWith("/experiments/real")
-              ? "Real experiments"
-              : pathname.startsWith("/agent")
-                ? "Real agent runs"
-                : pathname === "/verification"
-                  ? "Local verification"
-                  : "Fixture mode"}
+        {demoMode ? "Recorded demo" : "Local workspace"}
         <span className="version">v0.4</span>
       </div>
     </aside>
   );
 }
-export function Topbar() {
+export function Topbar({ demoMode = false }: { demoMode?: boolean }) {
   const pathname = usePathname();
   const section =
-    pathname === "/architecture"
-      ? "Architecture"
-      : pathname === "/engagement"
-        ? "Customer engagement"
-        : pathname.startsWith("/agent")
-          ? "Coding agent"
-          : pathname.startsWith("/verification")
-            ? "Benchmark verification"
-            : pathname.startsWith("/experiments")
-              ? "Experiments"
-              : pathname.startsWith("/runs")
-                ? "Benchmark runs"
-                : "Overview";
+    links.find((link) => link.href !== "/" && pathname.startsWith(link.href))
+      ?.label ??
+    (pathname.startsWith("/agent")
+      ? "Coding agent"
+      : pathname === "/verification"
+        ? "Verification"
+        : "Overview");
   return (
     <div className="topbar">
       <div className="breadcrumbs">
@@ -127,35 +96,38 @@ export function Topbar() {
         <strong>{section}</strong>
       </div>
       <div className="topbar-right">
-        <span className="repo-label">
-          <GitBranch size={13} />
-          shadowline-benchmark
-        </span>
-        <span className="demo-tag">PHASE 04 · PROTOTYPE</span>
+        {demoMode ? (
+          <span className="demo-tag" aria-label="Hosted demo">
+            Recorded demo — live agent execution disabled
+          </span>
+        ) : (
+          <span className="repo-label">
+            <GitBranch size={13} />
+            shadowline-benchmark
+          </span>
+        )}
       </div>
     </div>
   );
 }
-
 export function EvidenceFooter({ demoMode = false }: { demoMode?: boolean }) {
   const pathname = usePathname();
+  const label =
+    pathname === "/engagement"
+      ? "Illustrative customer assumptions · saved real benchmark evidence"
+      : pathname.startsWith("/agent") ||
+          pathname.startsWith("/experiments/real") ||
+          pathname === "/verification"
+        ? `${demoMode ? "Recorded" : "Local"} real benchmark evidence`
+        : pathname.startsWith("/runs/")
+          ? "Illustrative fixture"
+          : pathname === "/architecture"
+            ? "Architecture"
+            : "Recorded evidence · illustrative sections labeled separately";
   return (
     <footer className="app-footer">
-      <span>
-        <span className="fixture-dot" />
-        {pathname === "/architecture"
-          ? "Architecture · AI proposes, deterministic software verifies"
-          : pathname === "/engagement"
-            ? "Illustrative customer assumptions · saved real benchmark evidence"
-            : pathname === "/verification" ||
-                pathname.startsWith("/agent") ||
-                pathname.startsWith("/experiments/real")
-              ? demoMode
-                ? "Recorded real benchmark evidence · aggregate dashboards remain fixtures"
-                : "Live benchmark evidence · aggregate dashboards remain fixtures"
-              : "All results are illustrative fixtures"}
-      </span>
-      <span>AI proposes. Deterministic software verifies.</span>
+      <span>{label}</span>
+      <span>Shadowline</span>
     </footer>
   );
 }

@@ -62,15 +62,10 @@ export function AgentControl({
   }
   return (
     <section className="panel">
-      <SectionHeading
-        eyebrow="ONE CLICK · ONE ATTEMPT"
-        title="Run a controlled task"
-      />
+      <SectionHeading title="New attempt" />
       <div className="card-content agent-controls">
         <div className="info-strip">
-          Controlled benchmark environment. The selected model proposes code;
-          independent checks decide acceptance. Each attempt starts from the
-          unchanged baseline. No automatic retries or interventions.
+          Fresh baseline · one attempt · no automatic retries
         </div>
         <label>
           Provider
@@ -133,8 +128,8 @@ export function AgentControl({
         </p>
         <p>
           <strong>Validation requested in prompt:</strong>{" "}
-          {config.requiredChecks.join(" · ")}. Shadowline independently runs all
-          acceptance checks for both configurations.
+          {config.requiredChecks.join(" · ")}. All acceptance checks run
+          independently.
         </p>
         <p className={provider.ready ? "" : "text-warn"}>{provider.message}</p>
         <button
@@ -146,8 +141,8 @@ export function AgentControl({
         </button>
         <p role="status" aria-live="polite">
           {running
-            ? "Waiting for one model response, then validating paths, evaluating code, and cleaning up. This can take several minutes."
-            : "Results are saved locally and kept separate from fixture metrics."}
+            ? "Generating and evaluating one patch…"
+            : "Saved locally. No automatic retries."}
         </p>
         {error && (
           <p role="alert" className="text-bad">

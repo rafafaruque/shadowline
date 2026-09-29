@@ -60,9 +60,8 @@ export function DiagnoseButton({
       </button>
       <p role="status">
         {readOnly
-          ? "Diagnosis is disabled in the hosted demo. Inspect the saved experiment instead."
-          : error ||
-            "One diagnosis request. No coding attempt runs until an engineer approves."}
+          ? "Recorded demo · diagnosis disabled."
+          : error || "One diagnosis request; approval required before rerun."}
       </p>
     </div>
   );
@@ -118,8 +117,7 @@ export function ExperimentControls({
     <div className="intervention-editor">
       <p>
         Provider: <strong>{record.provider}</strong> · Model:{" "}
-        <strong>{record.model}</strong>. One attempt from the same unchanged
-        benchmark.
+        <strong>{record.model}</strong>. Same benchmark · one attempt.
       </p>
       <fieldset disabled={!editable || busy}>
         <legend>Context to add</legend>
@@ -193,10 +191,7 @@ export function ExperimentControls({
             {check}
           </label>
         ))}
-        <p>
-          These are instructions to the coding agent. Shadowline always runs the
-          full, unchanged deterministic evaluator.
-        </p>
+        <p>Prompt expectations. The full evaluator runs unchanged.</p>
       </fieldset>
       <label className="rationale-field">
         Intervention rationale
@@ -211,11 +206,7 @@ export function ExperimentControls({
           }
         />
       </label>
-      <p>
-        Rationale is review evidence only. The coding prompt uses the selected
-        repository files and criteria above; diagnosis prose and test-failure
-        details are never copied into it.
-      </p>
+      <p>Rationale stays outside the coding prompt.</p>
       {editable && (
         <>
           <button
@@ -281,7 +272,7 @@ export function ExperimentControls({
       {!editable && (
         <p>
           {readOnly
-            ? "Recorded intervention — editing, approval, and execution are disabled in the hosted demo."
+            ? "Recorded intervention · read-only."
             : `Execution is ${record.status.toLowerCase()}. This experiment cannot start another attempt.`}
         </p>
       )}

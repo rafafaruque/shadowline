@@ -58,7 +58,7 @@ npm run benchmark:setup
 npm run dev
 ```
 
-Open http://localhost:3000/verification to execute baseline readiness or either pagination patch. The dashboard and existing run/experiment pages retain their fixture data. Verification controls are available only with `npm run dev` and are disabled in production.
+Open http://localhost:3000/verification to execute baseline readiness or either pagination patch. Overview and Experiments prioritize the saved real comparison; illustrative runs and cohorts remain available in collapsed sections. Verification controls are available only with `npm run dev` and are disabled in production.
 
 ```sh
 npm run typecheck
@@ -80,7 +80,7 @@ The browser suite starts production on port 3100 and development on port 3101. I
 
 ## Public Vercel demo
 
-The hosted deployment is **read-only**. Reviewers can browse the dashboard, fixture runs, Northstar engagement, `/architecture`, `/agent` recorded runs, `/experiments/real`, and complete real run/experiment evidence. It displays: “Live agent execution is disabled in the hosted demo. This deployment contains recorded outputs from real local benchmark runs.” Measured results, fixture aggregates, and illustrative customer assumptions remain distinct.
+The hosted deployment is **read-only**. Reviewers can browse the dashboard, fixture runs, Northstar engagement, `/architecture`, `/agent` recorded runs, `/experiments/real`, and complete real run/experiment evidence. An understated header badge reads “Recorded demo — live agent execution disabled.” Measured results, fixture aggregates, and illustrative customer assumptions remain distinct.
 
 1. Commit the application changes **including `data/demo/evidence.json`** and import the repository into Vercel. Use the **Next.js** framework preset and the repository root.
 2. Use **`npm ci`** for installation and **`npm run build`** for the build; leave the output directory at the Next.js default. Use a Vercel-supported Node.js version satisfying `package.json` (`>=22`). Do not run `benchmark:setup`, tests that execute benchmarks, `agent:run`, or diagnosis/export scripts as deployment build steps.
@@ -106,6 +106,14 @@ npm run test:demo
 ```
 
 The additional browser suite uses production port 3102 with demo mode on, blank provider credentials, a nonexistent Codex binary, and a runtime guard that rejects child processes and local-only file access. It verifies real evidence, all inspection views, disabled controls, direct mutation rejection, and mobile layout. Run the original `npm run test:e2e` with demo mode false/unset to retain the existing local execution checks. Unit tests also load the bundle from an empty working directory to verify that `.shadowline` files and writes are unnecessary.
+
+## UI organization
+
+Primary navigation is Overview, Runs, Experiments, Engagement, and Architecture. Overview and Experiments lead with the saved real pagination comparison; Overview links to its full evidence in one click. Runs defaults to coding outcomes, groups provider incidents without counting them as coding failures, and keeps illustrative records behind an explicit disclosure. Fixture policy levels are unchanged and labeled illustrative.
+
+Run details separate Task, Context, Patch, Evaluation, Review decision, and Diagnosis. Full prompts, logs, approval rationale, and raw provenance remain inspectable behind disclosures. For real pagination runs, **critical failure** specifically means a failed evaluator-marked legacy API compatibility assertion; other contract failures still fail acceptance without necessarily being critical. No evaluator semantics changed.
+
+Northstar is an engagement workspace: workflow, constraints, hypothesis, measured comparison, pilot policy, rollout, and illustrative ROI. The product thesis and broader scientific cautions remain documented here and in the ADRs rather than repeated on every screen. Local execution controls and hosted-demo protections are unchanged.
 
 ## Core workflow
 
@@ -166,7 +174,7 @@ The CLI prints captured stdout/stderr, exit codes, counts, timing, fingerprints,
 
 The Phase 2 endpoint accepts only reviewed, checked-in patches. The separate real-agent path executes generated application code through an OS-restricted worker; see [agent trust boundary](docs/decisions/004-agent-trust-boundary.md).
 
-Dashboard metrics are calculated from the twelve inspectable attempts. Experiment cohorts (100 attempts per arm) and category history are separate authored fixtures; neither is inferred from the run table. Costs are illustrative USD estimates. Details and denominators are in [architecture](docs/architecture.md).
+The original aggregate metrics remain derived from twelve fixture attempts, but are no longer the Overview hero. Overview reads the real saved experiment and linked runs. Experiment cohorts (100 attempts per arm) and category history are separate authored fixtures; neither is inferred from the run table. Costs are illustrative USD estimates. Details and denominators are in [architecture](docs/architecture.md).
 
 ## Code map
 

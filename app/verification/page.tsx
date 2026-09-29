@@ -12,17 +12,12 @@ export default function VerificationPage() {
   return (
     <>
       <PageHeading
-        eyebrow="PHASE 02 · LOCAL DEVELOPMENT"
         title="Benchmark verification"
-        description="Apply one known patch to a fresh customer-service workspace and inspect real deterministic evidence."
+        description="Known patches · deterministic evaluation"
       />
       {isDemoMode() ? (
         <section className="panel card-content">
           <h2>Inspect recorded verification</h2>
-          <p>
-            Benchmark execution requires the local isolated workspace. No code
-            executes in this hosted view.
-          </p>
           <button className="button secondary" disabled>
             Run benchmark — local only
           </button>

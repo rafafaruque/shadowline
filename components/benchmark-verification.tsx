@@ -67,9 +67,7 @@ export function BenchmarkVerification() {
   return (
     <div className="benchmark-verification">
       <div className="info-strip">
-        These controls execute real checks. Dashboard metrics, historical runs,
-        and experiment aggregates remain illustrative fixtures. Results below
-        are temporary and are not added to those datasets.
+        Known patches · local execution · results are not persisted
       </div>
       <section className="panel">
         <SectionHeading title="Controlled patch fixtures">

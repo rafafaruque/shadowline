@@ -3,18 +3,23 @@ import { ArrowUpRight, Check, Circle, X } from "lucide-react";
 import { humanize } from "@/lib/format";
 
 export function Badge({ value }: { value: string }) {
-  const tone = ["PASSED", "AUTO", "LOW"].includes(value)
-    ? "good"
-    : ["FAILED", "HUMAN", "HIGH", "CRITICAL"].includes(value)
-      ? "bad"
-      : ["REVIEW", "REVIEW_REQUIRED", "WARNING", "MEDIUM"].includes(value)
-        ? "warn"
-        : "neutral";
+  const tone =
+    value === "PROVIDER_ERROR"
+      ? "incident"
+      : ["PASSED", "AUTO", "LOW"].includes(value)
+        ? "good"
+        : ["FAILED", "HUMAN", "HIGH", "CRITICAL"].includes(value)
+          ? "bad"
+          : ["REVIEW", "REVIEW_REQUIRED", "WARNING", "MEDIUM"].includes(value)
+            ? "warn"
+            : "neutral";
   const Icon = value === "PASSED" ? Check : value === "FAILED" ? X : Circle;
   return (
     <span className={`badge ${tone}`}>
       <Icon size={11} strokeWidth={2.5} />
-      {humanize(value)}
+      {["PASSED", "FAILED", "PROVIDER_ERROR"].includes(value)
+        ? value
+        : humanize(value)}
     </span>
   );
 }
@@ -43,7 +48,7 @@ export function PageHeading({
   description,
   children,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   description: string;
   children?: ReactNode;
@@ -51,7 +56,7 @@ export function PageHeading({
   return (
     <header className="page-heading">
       <div>
-        <div className="eyebrow">{eyebrow}</div>
+        {eyebrow && <div className="eyebrow">{eyebrow}</div>}
         <h1>{title}</h1>
         <p>{description}</p>
       </div>

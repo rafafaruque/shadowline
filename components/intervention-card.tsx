@@ -9,10 +9,7 @@ export function InterventionCard({
 }) {
   return (
     <section className="panel intervention">
-      <SectionHeading
-        eyebrow="A MORE INFORMED NEXT ATTEMPT"
-        title="Recommended intervention"
-      />
+      <SectionHeading title="Recommended intervention" />
       <div className="card-content">
         <h3>
           <FilePlus2 size={15} />
@@ -49,7 +46,10 @@ export function InterventionCard({
         {intervention.modelChangeSuggestion && (
           <p>Model suggestion: {intervention.modelChangeSuggestion}</p>
         )}
-        <p className="intervention-rationale">{intervention.rationale}</p>
+        <details className="inline-details">
+          <summary>Rationale</summary>
+          <p>{intervention.rationale}</p>
+        </details>
         <button
           className="button primary full-width"
           disabled
@@ -59,7 +59,7 @@ export function InterventionCard({
           <ArrowRight size={16} />
         </button>
         <p className="button-note" id="rerun-note">
-          Available in the next phase. No agent execution is connected.
+          Illustrative intervention · execution unavailable.
         </p>
       </div>
     </section>

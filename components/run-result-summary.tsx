@@ -1,6 +1,7 @@
 import { Check, CircleAlert, X } from "lucide-react";
 import type { EvaluationResult } from "@/lib/domain/types";
 import { SectionHeading } from "./ui";
+import { CriticalStatus } from "./critical-status";
 
 export function RunResultSummary({ result }: { result: EvaluationResult }) {
   const rows = [
@@ -16,6 +17,9 @@ export function RunResultSummary({ result }: { result: EvaluationResult }) {
     },
     ...(
       [
+        ...(result.publicTests
+          ? [["Public tests", result.publicTests] as const]
+          : []),
         ["Unit tests", result.unitTests],
         ["Integration tests", result.integrationTests],
         ["Contract tests", result.contractTests],
@@ -44,10 +48,7 @@ export function RunResultSummary({ result }: { result: EvaluationResult }) {
   ];
   return (
     <section className="panel">
-      <SectionHeading
-        eyebrow="DETERMINISTIC CHECKS"
-        title="Evaluation evidence"
-      />
+      <SectionHeading title="Evaluation" />
       <div className="evidence-list">
         {rows.map(({ label, value, state }) => {
           const Icon =
@@ -72,12 +73,7 @@ export function RunResultSummary({ result }: { result: EvaluationResult }) {
         })}
       </div>
       <div className="panel-footnote">
-        Evaluator-owned checks: {result.checksRun.join(" · ")}
-        <br />
-        Critical failure:{" "}
-        <strong className={result.criticalFailure ? "text-bad" : ""}>
-          {result.criticalFailure ? "Yes" : "No"}
-        </strong>
+        <CriticalStatus value={result.criticalFailure} />
       </div>
     </section>
   );

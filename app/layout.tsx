@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { AppSidebar, Topbar, EvidenceFooter } from "@/components/app-sidebar";
 import "./globals.css";
-import { demoNotice, isDemoMode } from "@/lib/demo-mode";
+import { isDemoMode } from "@/lib/demo-mode";
 
 // Read the server-side mode for each request, including navigation and notices.
 export const dynamic = "force-dynamic";
@@ -11,8 +11,7 @@ export const metadata: Metadata = {
     default: "Shadowline · Agent workflow evaluation",
     template: "%s · Shadowline",
   },
-  description:
-    "Measure agent failures, improve task design, and earn autonomy with deterministic evidence. Fixture-driven engineering prototype.",
+  description: "Coding-agent workflow health.",
 };
 
 export default function RootLayout({
@@ -26,15 +25,8 @@ export default function RootLayout({
         </a>
         <AppSidebar demoMode={isDemoMode()} />
         <div className="app-shell">
-          <Topbar />
-          <main id="main">
-            {isDemoMode() && (
-              <aside className="demo-notice" aria-label="Hosted demo">
-                {demoNotice}
-              </aside>
-            )}
-            {children}
-          </main>
+          <Topbar demoMode={isDemoMode()} />
+          <main id="main">{children}</main>
           <EvidenceFooter demoMode={isDemoMode()} />
         </div>
       </body>

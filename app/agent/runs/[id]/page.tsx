@@ -6,9 +6,8 @@ import { evidenceReaders } from "@/lib/evidence/readers";
 import { canViewRealEvidence, isDemoMode } from "@/lib/demo-mode";
 import { DemoEvidenceNote } from "@/components/demo-evidence-note";
 import { DiagnoseButton } from "@/components/experiment-controls";
-
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Real agent run" };
+export const metadata = { title: "Run evidence" };
 export default async function AgentRunPage({
   params,
 }: {
@@ -22,269 +21,224 @@ export default async function AgentRunPage({
     (record) =>
       record.baselineRunId === run.id || record.interventionRunId === run.id,
   );
+  const incident = run.status === "PROVIDER_ERROR";
   return (
-    <div className="benchmark-verification">
+    <div className="workspace-stack">
       <PageHeading
-        eyebrow={`REAL AGENT RUN · ${run.configId.toUpperCase()} · ATTEMPT ${run.attemptNumber}`}
-        title="Pagination implementation"
-        description={run.context.task}
+        title="API pagination"
+        description={`${run.configId} · ${run.provider} / ${run.resolvedModel ?? run.model} · ${run.id.slice(0, 8)}`}
       >
-        <Link className="button secondary" href="/agent">
-          All real runs
+        <Badge value={run.status} />
+        <Link className="button secondary" href="/runs">
+          All runs
         </Link>
       </PageHeading>
-      <DemoEvidenceNote />
-      {(experiments.length > 0 ||
-        (run.configId === "baseline" &&
-          run.status === "FAILED" &&
-          run.evaluation)) && (
-        <section className="panel">
-          <SectionHeading title="Diagnosis and intervention evidence" />
-          <div className="card-content">
-            <p>
-              Linked experiment evidence preserves this historical run
-              unchanged. AI diagnoses are hypotheses; only deterministic checks
-              decide acceptance.
-            </p>
-            {experiments.map((record) => (
-              <p key={record.id}>
-                <Link href={`/experiments/real/${record.id}`}>
-                  Inspect real intervention experiment · {record.status}
-                </Link>
-              </p>
-            ))}
-            {run.configId === "baseline" &&
-              run.status === "FAILED" &&
-              run.evaluation &&
-              experiments.length === 0 && (
-                <DiagnoseButton
-                  baselineRunId={run.id}
-                  readOnly={isDemoMode()}
-                />
-              )}
-          </div>
-        </section>
-      )}
       <section className="panel">
-        <SectionHeading title="Engineering decision">
-          <Badge value={run.status} />
-        </SectionHeading>
-        <div className="card-content">
-          <h3>
-            {run.status === "PROVIDER_ERROR"
+        <SectionHeading title="Review decision" />
+        <div className="card-content decision-row">
+          <strong>
+            {incident
               ? "Provider unavailable · no coding outcome"
               : run.requiresHumanReview
                 ? "Human review required"
                 : "Accepted by benchmark checks"}
-          </h3>
-          <p>
-            {run.status === "PROVIDER_ERROR"
-              ? "Excluded from coding-agent failures, benchmark failures, first-pass acceptance, and autonomy evidence. No code review is required because no patch was generated."
-              : run.requiresHumanReview
-                ? "Inspect the evidence below before taking further action."
-                : "All deterministic acceptance checks passed. This is benchmark acceptance, not a production deployment approval."}
-          </p>
-          <dl className="benchmark-evidence">
-            <dt>Provider / model</dt>
-            <dd>
-              {run.provider} / {run.resolvedModel ?? run.model}
-            </dd>
-            <dt>Critical regression observed</dt>
-            <dd>
-              {run.criticalFailure ? "Yes" : "No"}
-              {!run.evaluation && " · evaluation unavailable"}
-            </dd>
-            <dt>First-pass acceptance</dt>
-            <dd>
-              {run.status === "PROVIDER_ERROR"
-                ? "Not applicable · provider error"
-                : run.firstPassAccepted === null
-                  ? "Undetermined"
-                  : run.firstPassAccepted
-                    ? "Yes"
-                    : "No"}
-            </dd>
-            <dt>Attempt numbering</dt>
-            <dd>
-              Request history includes provider errors; first-pass acceptance
-              excludes them.
-            </dd>
-            <dt>Files proposed</dt>
-            <dd>
-              {run.proposedFiles.map((file) => file.path).join(", ") || "None"}
-            </dd>
-            <dt>Files applied</dt>
-            <dd>{run.appliedFiles.join(", ") || "None"}</dd>
-            <dt>Paths rejected</dt>
-            <dd>{run.rejectedPaths.join(", ") || "None"}</dd>
-          </dl>
-          {run.status === "RUNNING" && (
-            <p>
-              Attempt in progress. Refresh to see completion. If the server
-              stopped, this record remains incomplete; no pass is inferred.
-            </p>
+          </strong>
+          <span className="muted">
+            {incident
+              ? "Excluded from coding failures, acceptance rates, and autonomy evidence."
+              : !run.requiresHumanReview
+                ? "Benchmark acceptance only; no production merge approval."
+                : "Deterministic acceptance failed or remains incomplete."}
+          </span>
+        </div>
+      </section>
+      <div className="workspace-grid">
+        <section className="panel">
+          <SectionHeading title="Task" />
+          <div className="card-content">
+            <p>{run.context.task}</p>
+            <details className="inline-details">
+              <summary>Acceptance criteria &amp; scope</summary>
+              <ul className="compact-list">
+                {run.context.acceptanceCriteria.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              <p>Allowed paths: {run.context.allowedPaths.join(", ")}</p>
+              <p>
+                Requested checks:{" "}
+                {run.context.requiredChecks.join(" · ") || "None"}
+              </p>
+            </details>
+          </div>
+        </section>
+        <section className="panel">
+          <SectionHeading title="Context">
+            <span className="small-chip">{run.context.files.length} files</span>
+          </SectionHeading>
+          <div className="card-content">
+            {run.context.files.map((file) => (
+              <details className="file-disclosure" key={file.path}>
+                <summary>
+                  <code>{file.path}</code>
+                </summary>
+                <pre className="agent-code">
+                  <code>{file.content}</code>
+                </pre>
+                <p className="benchmark-hash">SHA-256: {file.sha256}</p>
+              </details>
+            ))}
+            <details className="inline-details">
+              <summary>View full prompt</summary>
+              <pre className="agent-code">
+                <code>{run.context.systemPrompt}</code>
+              </pre>
+              <pre className="agent-code">
+                <code>{run.context.userPrompt}</code>
+              </pre>
+              <p className="benchmark-hash">
+                SHA-256: {run.context.promptSha256}
+              </p>
+            </details>
+          </div>
+        </section>
+      </div>
+      <section className="panel">
+        <SectionHeading title="Patch">
+          <span className="small-chip">
+            {run.proposedFiles.length} proposed · {run.appliedFiles.length}{" "}
+            applied
+          </span>
+        </SectionHeading>
+        <div className="card-content">
+          {run.proposedFiles.length ? (
+            run.proposedFiles.map((file) => (
+              <details className="file-disclosure" key={file.path}>
+                <summary>
+                  <code>{file.path}</code>
+                  <span className="small-chip">
+                    {run.appliedFiles.includes(file.path)
+                      ? "Applied"
+                      : "Not applied"}
+                  </span>
+                </summary>
+                <pre className="agent-code">
+                  <code>{file.content}</code>
+                </pre>
+              </details>
+            ))
+          ) : (
+            <p className="muted">No code proposed.</p>
           )}
-          {run.errors.map((error, index) => (
-            <p className="text-bad" key={index}>
-              {error}
-            </p>
-          ))}
+          {run.rejectedPaths.length > 0 && (
+            <p className="text-bad">Rejected: {run.rejectedPaths.join(", ")}</p>
+          )}
+          <details className="inline-details">
+            <summary>Agent summary</summary>
+            <p>{run.summary || "Not available"}</p>
+          </details>
         </div>
       </section>
       {run.evaluation ? (
-        <RunResultSummary result={run.evaluation} />
-      ) : (
-        <div className="info-strip">No completed evaluation is available.</div>
-      )}
-      {run.evaluation && (
-        <section className="panel">
-          <SectionHeading title="Checks and failures" />
-          <div className="card-content">
-            <p>
-              Public tests: {run.evaluation.publicTests?.passed} passed /{" "}
-              {run.evaluation.publicTests?.failed} failed
-            </p>
-            {run.evaluation.failureDetails.length ? (
-              run.evaluation.failureDetails.map((failure, index) => (
+        <>
+          <RunResultSummary result={run.evaluation} />
+          <details className="panel disclosure">
+            <summary>
+              View logs · {run.evaluation.failureDetails.length} findings
+            </summary>
+            <div className="card-content">
+              {run.evaluation.failureDetails.map((failure, index) => (
                 <pre className="agent-code text-bad" key={index}>
-                  {failure}
+                  <code>{failure}</code>
                 </pre>
-              ))
-            ) : (
-              <p>No deterministic failures recorded.</p>
-            )}
-            {run.evaluation.checkRecords?.map((check) => (
-              <details className="benchmark-check" key={check.id}>
-                <summary>
-                  {check.id} · {check.status} · {check.durationMs} ms
-                </summary>
-                <p className="mono">{check.command}</p>
-                <p>
-                  Exit: {check.exitCode ?? "none"} · {check.reportError}
-                </p>
-                <pre className="agent-code">
-                  <code>
-                    {check.stdout}
-                    {check.stderr}
-                  </code>
-                </pre>
-              </details>
+              ))}
+              {run.evaluation.checkRecords?.map((check) => (
+                <details className="benchmark-check" key={check.id}>
+                  <summary>
+                    {check.id} · {check.status} · {check.durationMs} ms
+                  </summary>
+                  <p className="mono">{check.command}</p>
+                  <p>
+                    Exit: {check.exitCode ?? "none"} · {check.reportError}
+                  </p>
+                  <pre className="agent-code">
+                    <code>
+                      {check.stdout}
+                      {check.stderr}
+                    </code>
+                  </pre>
+                </details>
+              ))}
+            </div>
+          </details>
+        </>
+      ) : (
+        <section className="panel">
+          <SectionHeading title="Evaluation" />
+          <p className="card-content muted">Not evaluated.</p>
+        </section>
+      )}
+      {(experiments.length > 0 ||
+        (run.configId === "baseline" && run.status === "FAILED")) && (
+        <section className="panel">
+          <SectionHeading title="Diagnosis" />
+          <div className="card-content">
+            {experiments.map((record) => (
+              <p key={record.id}>
+                <Link
+                  className="text-link"
+                  href={`/experiments/real/${record.id}`}
+                >
+                  {record.baselineRunId !== run.id
+                    ? "Baseline hypothesis · "
+                    : ""}
+                  {record.diagnosis.output?.primaryClassification ??
+                    record.status}{" "}
+                  · View experiment →
+                </Link>
+              </p>
             ))}
+            {!experiments.length && (
+              <DiagnoseButton baselineRunId={run.id} readOnly={isDemoMode()} />
+            )}
           </div>
         </section>
       )}
       <section className="panel">
-        <SectionHeading
-          eyebrow="MODEL OUTPUT · NOT AN EVALUATION"
-          title="Proposed changes"
-        />
+        <SectionHeading title="Execution" />
         <div className="card-content">
-          <p>{run.summary || "No valid proposal received."}</p>
-          {run.proposedFiles.map((file) => (
-            <details className="benchmark-check" key={file.path}>
-              <summary>
-                {file.path} ·{" "}
-                {run.appliedFiles.includes(file.path)
-                  ? "applied in temporary workspace"
-                  : "not applied"}
-              </summary>
-              <h3>Before</h3>
-              <pre className="agent-code">
-                {run.context.files.find((item) => item.path === file.path)
-                  ?.content ?? "Not supplied in context"}
-              </pre>
-              <h3>Proposed replacement</h3>
-              <pre className="agent-code">{file.content}</pre>
-            </details>
-          ))}
-        </div>
-      </section>
-      <section className="panel">
-        <SectionHeading
-          eyebrow="EXACT INPUT SNAPSHOT"
-          title="What the agent knew"
-        />
-        <div className="card-content">
-          <p>
-            <strong>Task:</strong> {run.context.task}
-          </p>
-          <p>
-            <strong>Explicit criteria:</strong>{" "}
-            {run.context.acceptanceCriteria.join(" ") || "None supplied"}
-          </p>
-          <p>
-            <strong>Requested validation:</strong>{" "}
-            {run.context.requiredChecks.join(" · ")}
-          </p>
-          <p>
-            <strong>Allowed modifications:</strong>{" "}
-            {run.context.allowedPaths.join(", ")}
-          </p>
-          {run.context.files.map((file) => (
-            <details className="benchmark-check" key={file.path}>
-              <summary>{file.path}</summary>
-              <p className="benchmark-hash">SHA-256: {file.sha256}</p>
-              <pre className="agent-code">{file.content}</pre>
-            </details>
-          ))}
-          <details className="benchmark-check">
-            <summary>Exact system and user prompts</summary>
-            <pre className="agent-code">{run.context.systemPrompt}</pre>
-            <pre className="agent-code">{run.context.userPrompt}</pre>
-            <p className="benchmark-hash">
-              Prompt SHA-256: {run.context.promptSha256}
-            </p>
-          </details>
-        </div>
-      </section>
-      <section className="panel">
-        <SectionHeading title="Measured execution metadata" />
-        <div className="card-content">
-          {run.providerMetadata && (
-            <details className="benchmark-check">
-              <summary>Provider execution details</summary>
-              <pre className="agent-code">
-                {JSON.stringify(run.providerMetadata, null, 2)}
-              </pre>
-            </details>
-          )}
-          <dl className="benchmark-evidence">
-            <dt>Run ID</dt>
-            <dd>{run.id}</dd>
-            <dt>Start / end (UTC)</dt>
-            <dd>
-              {run.startedAt} / {run.endedAt ?? "Pending"}
-            </dd>
-            <dt>Total runtime</dt>
-            <dd>{run.durationMs} ms</dd>
-            <dt>Tokens</dt>
-            <dd>
-              {run.tokenUsage
-                ? `${run.tokenUsage.input} input · ${run.tokenUsage.cachedInput} cached · ${run.tokenUsage.output} output (including thinking) · ${run.tokenUsage.total} total`
-                : "Not available"}
-            </dd>
-            <dt>Estimated inference cost</dt>
-            <dd>
-              {run.estimatedInferenceCost === null
-                ? run.provider === "codex-cli"
-                  ? "Unknown (local Codex login usage)"
-                  : "Unknown (no verified rates configured)"
-                : `$${run.estimatedInferenceCost.toFixed(6)}`}{" "}
-              {run.costBasis}
-            </dd>
-            <dt>Remediation effort</dt>
-            <dd>Not measured</dd>
-            <dt>Temporary workspace</dt>
-            <dd>
-              {run.workspaceCleanedUp
-                ? "Cleaned up"
-                : "Not confirmed / not created"}
-            </dd>
-            <dt>Baseline SHA-256</dt>
-            <dd className="benchmark-hash">
-              {run.baselineFingerprint ?? "Not available"}
-            </dd>
+          <dl className="compact-metrics">
+            <div>
+              <dt>Runtime</dt>
+              <dd>{(run.durationMs / 1000).toFixed(3)}s</dd>
+            </div>
+            <div>
+              <dt>Tokens</dt>
+              <dd>
+                {run.tokenUsage?.total.toLocaleString("en-US") ?? "Unavailable"}
+              </dd>
+            </div>
+            <div>
+              <dt>Inference cost</dt>
+              <dd>
+                {run.estimatedInferenceCost === null
+                  ? "Unknown"
+                  : `$${run.estimatedInferenceCost.toFixed(6)}`}
+              </dd>
+            </div>
           </dl>
+          {run.errors.map((error, index) => (
+            <p className="text-warn" key={index}>
+              {error}
+            </p>
+          ))}
+          <details className="inline-details">
+            <summary>View raw evidence</summary>
+            <pre className="agent-code">
+              <code>{JSON.stringify(run, null, 2)}</code>
+            </pre>
+          </details>
+          <DemoEvidenceNote />
         </div>
       </section>
     </div>

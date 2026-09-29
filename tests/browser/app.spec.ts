@@ -1,16 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { loadEngagementEvidence } from "../../lib/engagement/evidence";
 
-test("customer engagement separates saved evidence, assumptions, and the pilot policy", async ({
+test("engagement keeps measured evidence separate from the pilot and illustrative ROI", async ({
   page,
 }) => {
-  const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
-  await page
-    .getByRole("link", { name: /Customer engagement — Northstar Software/ })
-    .click();
-  await expect(page).toHaveURL(/\/engagement$/);
+  await page.getByRole("link", { name: /Northstar Software/ }).click();
   await expect(
     page.getByRole("heading", { name: "Northstar Software", exact: true }),
   ).toBeVisible();
@@ -22,90 +17,45 @@ test("customer engagement separates saved evidence, assumptions, and the pilot p
       .getByRole("region", { name: "Customer requirements" })
       .locator("tbody tr"),
   ).toHaveCount(6);
-  const assumptions = page.getByRole("region", {
-    name: "Illustrative business assumptions — not measured by Shadowline",
-  });
-  for (const value of ["210", "63", "23%"])
-    await expect(assumptions.getByText(value, { exact: true })).toBeVisible();
-  const measured = page.getByRole("region", {
-    name: "Real measured experiment",
-  });
   const saved = await loadEngagementEvidence();
+  const measured = page.getByRole("region", { name: "Real experiment" });
   if (saved.available) {
-    const row = (name: string) =>
-      measured
-        .getByRole("row")
-        .filter({ has: page.getByRole("rowheader", { name, exact: true }) });
-    await expect(row("Overall result").getByRole("cell")).toHaveText([
-      saved.baseline.status,
-      saved.after.status,
-    ]);
+    const counts = (
+      suite: { passed: number; failed: number; skipped: number } | undefined,
+    ) =>
+      suite
+        ? `${suite.passed} / ${suite.passed + suite.failed + suite.skipped}`
+        : "Not evaluated";
     for (const [label, key] of [
-      ["Public tests", "publicTests"],
-      ["Contract tests", "contractTests"],
+      ["Public", "publicTests"],
+      ["Contract", "contractTests"],
     ] as const) {
-      const counts = [saved.baseline, saved.after].map(
-        (run) => run.evaluation?.[key],
-      );
-      await expect(row(label).getByRole("cell")).toHaveText(
-        counts.map((value) =>
-          value
-            ? `${value.passed} passed / ${value.failed} failed`
-            : "Not evaluated",
-        ),
-      );
+      const row = measured.getByRole("row").filter({
+        has: page.getByRole("rowheader", { name: label, exact: true }),
+      });
+      await expect(row.getByRole("cell")).toHaveText([
+        counts(saved.baseline.evaluation?.[key]),
+        counts(saved.after.evaluation?.[key]),
+      ]);
     }
-    await expect(
-      row("Total coding-attempt runtime").getByRole("cell"),
-    ).toHaveText(
-      [saved.baseline, saved.after].map(
-        (run) => `${(run.durationMs / 1000).toFixed(3)}s`,
-      ),
-    );
-    await expect(row("Token usage").getByRole("cell")).toHaveText(
-      [saved.baseline, saved.after].map((run) =>
-        run.tokenUsage
-          ? `${run.tokenUsage.total.toLocaleString("en-US")} tokens`
-          : "Not available",
-      ),
-    );
-    await expect(
-      measured.getByText(/Same task · same provider\/model/),
-    ).toBeVisible();
-  } else {
-    await expect(
-      measured.getByText(/Saved experiment unavailable/),
-    ).toBeVisible();
-    await expect(measured.getByRole("table")).toHaveCount(0);
-  }
-  const policy = page.getByRole("region", {
-    name: "Recommended Production Policy",
-  });
+  } else await expect(measured).toContainText("Saved experiment unavailable");
   await expect(
-    policy.getByText("LIGHT HUMAN REVIEW — PILOT", { exact: true }),
-  ).toBeVisible();
-  await expect(
-    policy.getByText("Do not automatically merge production changes.", {
-      exact: true,
-    }),
-  ).toBeVisible();
+    page.getByRole("region", { name: "Recommended pilot policy" }),
+  ).toContainText("LIGHT HUMAN REVIEW — PILOT");
   const roi = page.getByRole("region", { name: "Illustrative ROI" });
-  await expect(
-    roi.getByText("≈ 15 engineering hours / month", { exact: true }),
-  ).toBeVisible();
-  await expect(
-    roi.getByText("Not measured savings", { exact: true }),
-  ).toBeVisible();
-  await expect(page.locator("footer")).toContainText(
-    "Illustrative customer assumptions · saved real benchmark evidence",
+  await expect(roi).toContainText("15 hrs/month");
+  await expect(roi).toContainText(
+    "Customer assumptions, not benchmark-measured ROI.",
   );
+  await roi.getByText("Assumptions & calculation").click();
+  await expect(roi).toContainText("210 agent tasks/month");
+  await expect(roi).toContainText("23% meaningful rework");
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
     await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
+      () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  expect(errors).toEqual([]);
 });
 
 test("every route and fixture run renders without browser errors", async ({
@@ -122,9 +72,11 @@ test("every route and fixture run renders without browser errors", async ({
     const response = await page.goto(route);
     expect(response?.status()).toBe(200);
     await expect(page.locator("h1")).toBeVisible();
-    await expect(
-      page.getByText("All results are illustrative fixtures"),
-    ).toBeVisible();
+    await expect(page.locator("footer")).toContainText(
+      route.startsWith("/runs/")
+        ? "Illustrative fixture"
+        : "Recorded evidence · illustrative sections labeled separately",
+    );
   }
   expect(errors).toEqual([]);
 });
@@ -133,23 +85,32 @@ test("filters work together and can recover from an empty result", async ({
   page,
 }) => {
   await page.goto("/runs");
+  await page
+    .getByText("Illustrative runs · 12 fixtures", { exact: true })
+    .click();
+  const fixtures = page.locator("details").filter({
+    has: page.locator("summary", {
+      hasText: "Illustrative runs · 12 fixtures",
+    }),
+  });
   await page.getByRole("textbox", { name: "Search runs" }).fill("pagination");
-  await expect(page.locator("tbody tr")).toHaveCount(2);
+  await expect(fixtures.locator("tbody tr")).toHaveCount(2);
   await page.getByLabel("Filter by result").selectOption("FAILED");
-  await expect(page.locator("tbody tr")).toHaveCount(1);
+  await expect(fixtures.locator("tbody tr")).toHaveCount(1);
   await page.getByLabel("Filter by category").selectOption("DATABASE_CHANGE");
   await expect(page.getByText("No matching runs")).toBeVisible();
   await page.getByRole("button", { name: "Clear filters" }).click();
-  await expect(page.locator("tbody tr")).toHaveCount(12);
+  await expect(fixtures.locator("tbody tr")).toHaveCount(12);
 });
 
-test("hero flow exposes the contract failure, exact inputs, disabled action, and improved fixture", async ({
+test("illustrative detail retains contract failure, exact inputs, disabled action, and improved fixture", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/experiments");
   await page
-    .getByRole("link", { name: "Inspect failure & intervention" })
+    .getByText("Illustrative cohort · EXP-004", { exact: true })
     .click();
+  await page.getByRole("link", { name: "Baseline fixture →" }).click();
   await expect(page).toHaveURL(/\/runs\/SL-1042$/);
   await expect(
     page.getByText(
@@ -157,6 +118,7 @@ test("hero flow exposes the contract failure, exact inputs, disabled action, and
       { exact: true },
     ),
   ).toBeVisible();
+  await page.getByText("Intervention · illustrative", { exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Apply intervention & rerun" }),
   ).toBeDisabled();

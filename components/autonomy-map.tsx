@@ -5,12 +5,9 @@ import { Badge, SectionHeading } from "./ui";
 export function AutonomyMap() {
   return (
     <section className="panel" id="autonomy">
-      <SectionHeading eyebrow="EVIDENCE → POLICY" title="Autonomy map">
-        <span className="small-chip">Provisional policy</span>
+      <SectionHeading title="Illustrative workflow policy">
+        <span className="small-chip">Fixture-based</span>
       </SectionHeading>
-      <p className="section-description">
-        The right level of oversight, for each class of work.
-      </p>
       <div className="autonomy-header">
         <span>Task category</span>
         <span>Reliability</span>
@@ -45,11 +42,6 @@ export function AutonomyMap() {
           </div>
         </details>
       ))}
-      <div className="panel-footnote">
-        Illustrative historical window · separate from recent runs.
-        <br />
-        Select a category to inspect the policy evidence.
-      </div>
     </section>
   );
 }

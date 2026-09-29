@@ -80,22 +80,21 @@ export default async function RunPage({
           {money(run.estimatedCost)} estimated
         </span>
       </div>
-      {task.id === "customers-pagination" && (
-        <div className="info-strip">
-          Fixture narrative aligned with the executable pagination benchmark: 11
-          public tests and 16 contract tests. Timing, tokens, cost,
-          configuration, and diagnosis remain illustrative.{" "}
-          {process.env.NODE_ENV === "development" && (
-            <Link className="text-link" href="/verification">
-              Run real verification →
-            </Link>
-          )}
+      <section className="panel compact-review">
+        <SectionHeading title="Review decision" />
+        <div className="card-content">
+          <strong>
+            {run.humanReviewRequired
+              ? "Human review required"
+              : "Not required by fixture checks"}
+          </strong>
+          <span className="muted"> · Illustrative run</span>
         </div>
-      )}
+      </section>
       <div className="detail-grid">
         <div className="detail-column">
           <section className="panel">
-            <SectionHeading eyebrow="INTENT & CONSTRAINTS" title="Task" />
+            <SectionHeading title="Task" />
             <div className="card-content">
               <p>{task.description}</p>
               <h3>Task-owned acceptance criteria</h3>
@@ -124,10 +123,7 @@ export default async function RunPage({
             </div>
           </section>
           <section className="panel">
-            <SectionHeading
-              eyebrow="EXACT INPUT SNAPSHOT"
-              title="Agent configuration"
-            >
+            <SectionHeading title="Context">
               <span className="config-tag">{config.name}</span>
             </SectionHeading>
             <div className="card-content">
@@ -175,7 +171,10 @@ export default async function RunPage({
                   </div>
                 </dd>
               </dl>
-              <p className="config-note">{config.notes}</p>
+              <details className="inline-details">
+                <summary>Configuration notes</summary>
+                <p>{config.notes}</p>
+              </details>
             </div>
           </section>
           {run.evaluation?.failureDetails.length ? (
@@ -199,15 +198,21 @@ export default async function RunPage({
               <p>{run.summary}</p>
             </section>
           )}
-          <DiagnosisCard diagnoses={run.diagnoses} />
+          <details className="panel disclosure">
+            <summary>Diagnosis · illustrative hypothesis</summary>
+            <DiagnosisCard diagnoses={run.diagnoses} />
+          </details>
         </div>
         <div className="detail-column">
           {run.evaluation && <RunResultSummary result={run.evaluation} />}
           {run.intervention && (
-            <InterventionCard intervention={run.intervention} />
+            <details className="panel disclosure">
+              <summary>Intervention · illustrative</summary>
+              <InterventionCard intervention={run.intervention} />
+            </details>
           )}
           <section className="panel">
-            <SectionHeading title="Changed files" />
+            <SectionHeading title="Patch" />
             <div className="card-content file-list">
               {run.filesChanged.map((file) => (
                 <code key={file}>
@@ -216,8 +221,7 @@ export default async function RunPage({
                 </code>
               ))}
               <p className="muted">
-                Fixture file manifest. Live verification uses a separate
-                temporary workspace and does not update this record.
+                Fixture file manifest · no generated patch recorded.
               </p>
             </div>
           </section>

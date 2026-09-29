@@ -25,43 +25,41 @@ test("hosted demo preserves all inspection views and labels real versus illustra
   ]) {
     expect((await page.goto(route))?.status()).toBe(200);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(
-      page.getByRole("complementary", { name: "Hosted demo" }),
-    ).toContainText("Live agent execution is disabled in the hosted demo.");
+    await expect(page.getByLabel("Hosted demo")).toContainText(
+      "Recorded demo — live agent execution disabled",
+    );
   }
-  await page.goto("/engagement");
-  const measured = page.getByRole("region", {
-    name: "Real measured experiment",
-  });
+  await page.goto("/");
+  const hero = page.getByRole("region", { name: "Real experiment" });
   await expect(
-    measured.getByRole("cell", { name: "7 passed / 4 failed", exact: true }),
+    hero.getByRole("cell", { name: "7 / 11", exact: true }),
   ).toBeVisible();
   await expect(
-    measured.getByRole("cell", { name: "16 passed / 0 failed", exact: true }),
+    hero.getByRole("cell", { name: "16 / 16", exact: true }),
   ).toBeVisible();
-  for (const value of ["19.429s", "11.187s", "3,720 tokens", "4,221 tokens"])
-    await expect(
-      measured.getByRole("cell", { name: value, exact: true }),
-    ).toBeVisible();
-  await expect(
-    page.getByRole("region", { name: "Illustrative ROI" }),
-  ).toContainText("Not measured savings");
-  await measured
-    .getByText("Inspect saved evidence and measurement boundaries")
-    .click();
-  await measured
-    .getByRole("link", { name: "Inspect the original experiment" })
+  await hero
+    .getByRole("link", { name: "View experiment", exact: true })
     .click();
   await expect(page).toHaveURL(experiment);
+  await expect(page.getByText("CONTEXT_GAP", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("table", {
+      name: "Measured baseline versus context-rich evidence",
+    }),
+  ).toContainText("7 passed / 4 failed");
+  await page
+    .getByText("Approved intervention & rationale", { exact: true })
+    .click();
   await expect(
     page.getByRole("textbox", { name: "Intervention rationale" }),
   ).toBeDisabled();
-  await expect(page.getByText("CONTEXT GAP", { exact: true })).toBeVisible();
   await expect(
-    page.getByText(
-      "Recorded intervention — editing, approval, and execution are disabled in the hosted demo.",
-    ),
+    page.getByText("Recorded intervention · read-only.", { exact: true }),
   ).toBeVisible();
+  await page.goto("/engagement");
+  await expect(
+    page.getByRole("region", { name: "Illustrative ROI" }),
+  ).toContainText("Customer assumptions, not benchmark-measured ROI.");
   expect(errors).toEqual([]);
 });
 
@@ -98,12 +96,15 @@ test("all hosted mutation endpoints reject execution and file writes", async ({
   await expect(
     page.getByRole("button", { name: "Live coding-agent execution disabled" }),
   ).toBeDisabled();
-  await expect(page.getByRole("combobox")).toHaveCount(0);
+  await expect(page.getByLabel("Provider", { exact: true })).toHaveCount(0);
   await page.goto("/verification");
   await expect(
     page.getByRole("button", { name: "Run benchmark — local only" }),
   ).toBeDisabled();
   await page.goto("/experiments/real");
+  await page
+    .getByText("Failed baselines · diagnosis controls", { exact: true })
+    .click();
   await expect(
     page.getByRole("button", { name: "Diagnose & propose intervention" }),
   ).toBeDisabled();
@@ -114,14 +115,12 @@ test("recorded outages remain provider errors and evidence fits mobile", async (
 }) => {
   await page.goto("/agent/runs/051afcf9-379a-4ed2-8f2f-c4fb56ce15df");
   await expect(
-    page.getByRole("heading", {
-      name: "Provider unavailable · no coding outcome",
-    }),
+    page.getByText("Provider unavailable · no coding outcome", { exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByText(/Excluded from coding-agent failures/),
-  ).toBeVisible();
-  await expect(page.getByText(/recorded real evidence/i)).toBeVisible();
+  await expect(page.getByText(/Excluded from coding failures/)).toBeVisible();
+  await expect(page.locator("footer")).toContainText(
+    "Recorded real benchmark evidence",
+  );
   await page.setViewportSize({ width: 390, height: 844 });
   for (const route of [
     "/engagement",
@@ -137,4 +136,78 @@ test("recorded outages remain provider errors and evidence fits mobile", async (
       ),
     ).toBe(true);
   }
+});
+
+test("run filters preserve provider incidents without treating them as coding failures", async ({
+  page,
+}) => {
+  await page.goto("/runs");
+  const log = page.getByRole("region", { name: "Recorded runs" });
+  await expect(log.getByRole("row")).toHaveCount(3);
+  await page.getByLabel("Recorded result").selectOption("FAILED");
+  await expect(log.getByRole("row")).toHaveCount(2);
+  await expect(
+    log.getByRole("cell", { name: "FAILED", exact: true }),
+  ).toBeVisible();
+  await page.getByLabel("Recorded result").selectOption("PASSED");
+  await expect(log.getByRole("row")).toHaveCount(2);
+  await expect(
+    log.getByRole("cell", { name: "PASSED", exact: true }),
+  ).toBeVisible();
+  await page.getByLabel("Recorded result").selectOption("PROVIDER_ERROR");
+  await expect(
+    log.getByRole("cell", { name: "PROVIDER_ERROR", exact: true }),
+  ).toHaveCount(6);
+  await expect(
+    log.getByRole("cell", { name: "Not evaluated", exact: true }),
+  ).toHaveCount(6);
+  await expect(
+    log.getByText("Excluded from coding failures and acceptance rates.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+});
+
+test("primary pages preserve navigation and fit desktop and mobile", async ({
+  page,
+}, testInfo) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const [index, route] of [
+      "/",
+      "/runs",
+      "/experiments",
+      "/engagement",
+      "/architecture",
+      experiment,
+      baseline,
+      after,
+      "/runs/SL-1042",
+      "/agent",
+      "/verification",
+    ].entries()) {
+      await page.goto(route);
+      const nav = page.getByRole("navigation", { name: "Main navigation" });
+      await expect(nav.getByRole("link")).toHaveText([
+        "Overview",
+        "Runs",
+        "Experiments",
+        "Engagement",
+        "Architecture",
+      ]);
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        route,
+      ).toBe(true);
+      await page.screenshot({
+        path: testInfo.outputPath(`page-${index}-${width}.png`),
+        fullPage: true,
+      });
+    }
+  }
+  expect(errors).toEqual([]);
 });

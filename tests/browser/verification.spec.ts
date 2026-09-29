@@ -47,11 +47,7 @@ test("development controls execute both real patches and show distinct evidence"
     result.getByText("16 passed / 0 failed", { exact: true }),
   ).toBeVisible();
   await expect(result.getByText("NO", { exact: true })).toBeVisible();
-  await expect(
-    page.getByText(
-      "Live benchmark evidence · aggregate dashboards remain fixtures",
-    ),
-  ).toBeVisible();
+  await expect(page.getByText("Local real benchmark evidence")).toBeVisible();
 });
 
 test("development endpoint rejects extra commands and cross-origin requests", async ({
@@ -181,24 +177,21 @@ test("saved real runs expose exact inputs and honest review evidence", async ({
   }
   await links.first().click();
   await expect(
-    page.getByRole("heading", { name: "Engineering decision" }),
+    page.getByRole("heading", { name: "Review decision" }),
   ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Context" })).toBeVisible();
+  await page.getByText("View full prompt", { exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "What the agent knew" }),
+    page
+      .locator("details")
+      .filter({
+        has: page.getByText("View full prompt", { exact: true }),
+      })
+      .getByText('"task": "Add pagination support to GET /customers."', {
+        exact: false,
+      }),
   ).toBeVisible();
-  await page
-    .getByText("Exact system and user prompts", { exact: true })
-    .click();
-  await expect(
-    page.getByText('"task": "Add pagination support to GET /customers."', {
-      exact: false,
-    }),
-  ).toBeVisible();
-  await expect(
-    page.getByText(
-      "Live benchmark evidence · aggregate dashboards remain fixtures",
-    ),
-  ).toBeVisible();
+  await expect(page.getByText("Local real benchmark evidence")).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
     await page.evaluate(
@@ -255,20 +248,15 @@ test("real experiment keeps hypothesis, editable proposal, approval, and executi
       });
     });
     await link.click();
-    for (const name of [
-      "What failed?",
-      "What might have caused it?",
-      "Did the intervention help?",
-      "What should the engineer learn?",
-    ])
+    for (const name of ["What failed", "Hypothesis", "Evidence", "Conclusion"])
       await expect(
         page.getByRole("heading", { name, exact: true }),
       ).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: /What (will|did) we change\?/ }),
+      page.getByRole("heading", { name: "Intervention" }),
     ).toBeVisible();
     await expect(
-      page.getByText("AI HYPOTHESIS — NOT A VERDICT", { exact: false }),
+      page.getByText("Not a verdict", { exact: false }),
     ).toBeVisible();
     if (mock.status === "DRAFT") {
       const approve = page.getByRole("button", {

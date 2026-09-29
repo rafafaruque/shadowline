@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { PageHeading, SectionHeading, Badge } from "@/components/ui";
 import { evidenceReaders } from "@/lib/evidence/readers";
 import { canViewRealEvidence, isDemoMode } from "@/lib/demo-mode";
-import { DemoEvidenceNote } from "@/components/demo-evidence-note";
 import { DiagnoseButton } from "@/components/experiment-controls";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Real experiments" };
@@ -18,11 +17,9 @@ export default async function RealExperimentsPage() {
   return (
     <div className="benchmark-verification">
       <PageHeading
-        eyebrow="REAL EVIDENCE · HUMAN APPROVAL"
         title="Real intervention experiments"
-        description="Diagnose a failure, review a proposed change to the agent's inputs, and let the same tests measure what happened."
+        description="Saved comparisons and baseline diagnoses."
       />
-      <DemoEvidenceNote />
       <section className="panel">
         <SectionHeading title="Saved experiments" />
         <div className="card-content">
@@ -40,8 +37,8 @@ export default async function RealExperimentsPage() {
           )}
         </div>
       </section>
-      <section className="panel">
-        <SectionHeading title="Failed baselines available for diagnosis" />
+      <details className="panel disclosure">
+        <summary>Failed baselines · diagnosis controls</summary>
         <div className="card-content">
           {baselines.map((run) => (
             <div className="experiment-baseline" key={run.id}>
@@ -61,7 +58,7 @@ export default async function RealExperimentsPage() {
             <p>No evaluated failed baseline is available.</p>
           )}
         </div>
-      </section>
+      </details>
     </div>
   );
 }

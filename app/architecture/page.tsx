@@ -1,119 +1,137 @@
-import Link from "next/link";
 import { PageHeading, SectionHeading } from "@/components/ui";
-import { canViewRealEvidence, isDemoMode } from "@/lib/demo-mode";
-
+import { isDemoMode } from "@/lib/demo-mode";
 export const metadata = { title: "Architecture" };
-
+const boundaries = [
+  [
+    "Provider abstraction",
+    [
+      "Gemini / Codex CLI → same validated proposal schema",
+      "No direct benchmark writes; Codex tools disabled",
+    ],
+  ],
+  [
+    "Deterministic evaluator",
+    [
+      "Allowlisted paths and commands",
+      "Typecheck, public, integration, contract, scope checks",
+    ],
+  ],
+  [
+    "Hidden test isolation",
+    [
+      "Outside coding-agent context and editable workspace",
+      "Trusted harness owns contract assertions",
+    ],
+  ],
+  [
+    "Human approval",
+    [
+      "Diagnosis is a hypothesis, never a verdict",
+      "One approved intervention → one controlled attempt",
+    ],
+  ],
+];
 export default function ArchitecturePage() {
   return (
-    <div className="benchmark-verification">
+    <div className="workspace-stack">
       <PageHeading
-        eyebrow="ARCHITECTURE · TRUST BOUNDARIES"
-        title="AI proposes. Deterministic software verifies."
-        description="The hosted product displays evidence. The local runner generates and evaluates it."
+        title="Architecture"
+        description="AI proposes. Deterministic software verifies."
       />
       <section className="panel">
-        <SectionHeading title="Local experiment → recorded evidence → hosted inspection" />
+        <SectionHeading title="Execution boundary" />
         <div className="card-content">
-          <ol className="architecture-flow">
-            <li>
-              <strong>Local execution</strong>
-              <p>
-                Curated context → provider proposal → validated paths → isolated
-                workspace → deterministic checks.
-              </p>
-            </li>
-            <li>
-              <strong>Saved experiment</strong>
-              <p>
-                Inputs, generated files, evaluator results, diagnosis
-                hypothesis, human approval, and measured telemetry.
-              </p>
-            </li>
-            <li>
-              <strong>Read-only hosted demo</strong>
-              <p>
-                A bundled, reviewed snapshot serves the same real results
-                without CLI access, benchmark processes, credentials, or runtime
-                file writes.
-              </p>
-            </li>
+          <ol className="workflow-flow" aria-label="Architecture flow">
+            {[
+              "Curated context",
+              "Provider proposal",
+              "Path validation",
+              "Isolated patch",
+              "Deterministic checks",
+              "Saved evidence",
+            ].map((label, index) => (
+              <li key={label}>
+                <span>{index + 1}</span>
+                {label}
+              </li>
+            ))}
           </ol>
+          <p className="muted">
+            AI proposes structured contents. Shadowline applies and evaluates
+            them.
+          </p>
         </div>
       </section>
+      <div className="workspace-grid">
+        {boundaries.map(([title, items]) => (
+          <section className="panel" key={title as string}>
+            <SectionHeading title={title as string} />
+            <ul className="card-content compact-list">
+              {(items as string[]).map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
       <section className="panel">
-        <SectionHeading title="Existing local boundaries remain intact" />
-        <div className="card-content">
-          <h3>Generic coding provider</h3>
-          <p>
-            Gemini and Codex CLI return the same Zod-validated file-proposal
-            schema. Providers cannot apply changes directly. The Codex adapter
-            disables tools and isolates the process from the benchmark
-            repository.
-          </p>
-          <h3>Deterministic acceptance</h3>
-          <p>
-            Shadowline owns allowed paths, isolated writes, trusted commands,
-            public and hidden contract checks, and critical-failure decisions.
-            Hidden evaluation infrastructure stays outside the coding-agent
-            prompt and workspace.
-          </p>
-          <h3>Diagnosis and intervention</h3>
-          <p>
-            AI diagnosis is a hypothesis. An engineer reviews and explicitly
-            approves an intervention before a single controlled rerun. The
-            evaluator decides the result; no LLM judge can overwrite it.
-          </p>
-          <h3>Evidence and review policy</h3>
-          <p>
-            Provider errors are excluded from coding failures, first-pass
-            acceptance, and autonomy evidence. Passing one benchmark does not
-            establish general reliability or permit automatic production
-            merging.
-          </p>
+        <SectionHeading title="Local vs hosted">
+          <span className="config-tag">
+            Current: {isDemoMode() ? "Recorded demo" : "Local"}
+          </span>
+        </SectionHeading>
+        <div className="table-scroll">
+          <table className="operational-table">
+            <thead>
+              <tr>
+                <th>Boundary</th>
+                <th>Local development</th>
+                <th>Hosted demo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Evidence</th>
+                <td>Local saved records</td>
+                <td>Bundled, read-only snapshot</td>
+              </tr>
+              <tr>
+                <th>Agent / benchmark execution</th>
+                <td>Isolated local processes</td>
+                <td>Disabled server-side</td>
+              </tr>
+              <tr>
+                <th>Intervention edits / approval</th>
+                <td>Explicit engineer actions</td>
+                <td>Recorded only</td>
+              </tr>
+              <tr>
+                <th>Filesystem</th>
+                <td>Local stores + temporary workspace</td>
+                <td>No application writes</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
-      <section className="panel">
-        <SectionHeading title="Separate data sources, explicit provenance" />
-        <div className="card-content">
-          <ul>
-            <li>
-              Dashboard aggregates and fixture run comparisons remain labeled
-              illustrative.
-            </li>
-            <li>
-              Real agent runs and the approved Phase 4 experiment retain actual
-              recorded outcomes.
-            </li>
-            <li>
-              Northstar business assumptions and ROI remain illustrative,
-              separate from measured benchmark evidence.
-            </li>
-            <li>
-              Hosted copies redact local machine paths from logs. Original
-              hashes refer to local originals; public-copy hashes are recorded
-              in the export manifest.
-            </li>
-          </ul>
-          <p>
-            {isDemoMode()
-              ? "Current mode: hosted demo. Agent generation, diagnosis, approval, editing, and benchmark execution endpoints are disabled server-side."
-              : "Current mode: local. Development execution controls and the original local stores remain available."}
-          </p>
-          {canViewRealEvidence() && (
-            <p>
-              <Link className="text-link" href="/experiments/real">
-                Inspect the real intervention evidence →
-              </Link>
-            </p>
-          )}
-          <p>
-            <Link className="text-link" href="/engagement">
-              Explore the customer engagement →
-            </Link>
-          </p>
-        </div>
-      </section>
+      <details className="panel disclosure">
+        <summary>Evidence provenance</summary>
+        <ul className="card-content compact-list">
+          <li>
+            Real records: measured results, proposals, diagnosis, and approval.
+          </li>
+          <li>
+            Fixture runs and cohort policies: illustrative, labeled separately.
+          </li>
+          <li>Northstar ROI: customer assumptions, not measured savings.</li>
+          <li>
+            Provider errors: excluded from coding failures and acceptance rates.
+          </li>
+          <li>
+            Hosted copies: local paths redacted; original hashes retained.
+          </li>
+        </ul>
+      </details>
     </div>
   );
 }
