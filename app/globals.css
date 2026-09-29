@@ -47,7 +47,7 @@
   box-sizing: border-box;
 }
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 body {
   margin: 0;
@@ -137,7 +137,8 @@ code,
   left: 260px;
   z-index: 100;
   padding: 10px 20px;
-  background: white;
+  background: #202d24;
+  color: #e1ebe4;
 }
 .skip-link:focus {
   top: 10px;
@@ -2239,20 +2240,6 @@ h2 {
   border-color: #46654e;
   box-shadow: inset 3px 0 #77a784;
 }
-.homepage-workflow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 14px;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-}
-.homepage-workflow li:not(:last-child)::after {
-  content: "→";
-  margin-left: 14px;
-}
 .operational-table {
   width: 100%;
   border-collapse: collapse;
@@ -2523,6 +2510,8 @@ summary {
 }
 .row-actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 22px;
   margin-top: 18px;
   font-size: 12px;
@@ -2789,4 +2778,34 @@ summary {
 }
 .rollout-steps {
   list-style: decimal;
+}
+
+.setup-choice {
+  display: block;
+  padding: 18px;
+  color: var(--ink);
+}
+.setup-choice p {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 8px 0 14px;
+}
+.setup-choice.selected {
+  border-color: #77a784;
+  box-shadow: inset 3px 0 #77a784;
+}
+.activity-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px 32px;
+  justify-content: space-between;
+}
+.activity-row p {
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.real-experiment .summary-table {
+  min-width: 0;
 }

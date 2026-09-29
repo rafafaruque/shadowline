@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PageHeading } from "@/components/ui";
-import { RealExperimentSummary } from "@/components/real-experiment-summary";
+import { ExperimentHistory } from "@/components/experiment-history";
 import { ExperimentChart } from "@/components/experiment-chart";
 import { experiment } from "@/lib/fixtures/experiments";
 import { money, percent } from "@/lib/format";
@@ -32,17 +32,22 @@ export default function ExperimentsPage() {
     <div className="workspace-stack">
       <PageHeading
         title="Experiments"
-        description="Compare coding-agent configurations against the same benchmark."
+        description="Recorded comparisons of task setups."
       >
         {canViewRealEvidence() && (
-          <Link className="button secondary" href="/experiments/real">
-            All real experiments
+          <Link className="button primary" href="/experiments/new">
+            Start experiment →
           </Link>
         )}
       </PageHeading>
-      <RealExperimentSummary />
+      <ExperimentHistory />
+      {canViewRealEvidence() && (
+        <Link className="text-link" href="/experiments/real">
+          All saved diagnoses & local controls →
+        </Link>
+      )}
       <details className="panel disclosure">
-        <summary>Illustrative cohort · {experiment.id}</summary>
+        <summary>Illustrative data · {experiment.id}</summary>
         <div className="card-content">
           <p className="muted">
             Authored simulation · {a.sampleSize} tasks per configuration ·

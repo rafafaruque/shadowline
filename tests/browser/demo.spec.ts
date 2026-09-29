@@ -30,17 +30,15 @@ test("hosted demo preserves all inspection views and labels real versus illustra
     );
   }
   await page.goto("/");
-  const hero = page.getByRole("region", { name: "Real experiment" });
-  await expect(
-    hero.getByRole("cell", { name: "7 / 11", exact: true }),
-  ).toBeVisible();
-  await expect(
-    hero.getByRole("cell", { name: "16 / 16", exact: true }),
-  ).toBeVisible();
-  await hero
-    .getByRole("link", { name: "See what changed →", exact: true })
+  const recent = page.getByRole("region", { name: "Recent experiment" });
+  await expect(recent).toContainText("11/11 public · 16/16 contract");
+  await recent
+    .getByRole("link", { name: "View experiment →", exact: true })
     .click();
   await expect(page).toHaveURL(experiment);
+  await page
+    .getByText("View complete experiment evidence", { exact: true })
+    .click();
   await expect(page.getByText("CONTEXT_GAP", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("table", {
@@ -211,3 +209,152 @@ test("primary pages preserve navigation and fit desktop and mobile", async ({
   }
   expect(errors).toEqual([]);
 });
+
+for (const width of [1440, 390]) {
+  test(`first-time recorded walkthrough stays read-only at ${width}px`, async ({
+    page,
+  }, testInfo) => {
+    const mutations: string[] = [];
+    const errors: string[] = [];
+    page.on("request", (request) => {
+      if (!["GET", "HEAD"].includes(request.method()))
+        mutations.push(`${request.method()} ${request.url()}`);
+    });
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.setViewportSize({ width, height: 900 });
+    const inspect = async (step: string) => {
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+      await page.screenshot({
+        path: testInfo.outputPath(`${step}.png`),
+        fullPage: true,
+      });
+    };
+    await page.goto("/");
+    await expect(
+      page.getByText("Test and improve coding-agent workflows.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await inspect("01-home");
+    await page
+      .getByRole("link", { name: "Start experiment →", exact: true })
+      .click();
+    await expect(page).toHaveURL("/experiments/new");
+    await inspect("02-task");
+    await page.getByRole("link", { name: "Continue →", exact: true }).click();
+    await expect(
+      page.getByRole("heading", { name: "Agent setup", exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText("GPT-6 Astra", { exact: false })).toBeVisible();
+    await page
+      .getByRole("link", { name: /Context-rich.*Select setup/ })
+      .click();
+    await page.getByText("View context · 6 files", { exact: true }).click();
+    await expect(
+      page.locator("summary", { hasText: "docs/api-conventions.md" }),
+    ).toBeVisible();
+    await page.getByRole("link", { name: /Baseline.*Select setup/ }).click();
+    await page.getByText("View context · 4 files", { exact: true }).click();
+    await expect(
+      page.locator("summary", { hasText: "docs/api-conventions.md" }),
+    ).toHaveCount(0);
+    await inspect("03-agent-setup");
+    await page
+      .getByRole("link", { name: "View recorded run →", exact: true })
+      .click();
+    await expect(page).toHaveURL(baseline);
+    await expect(
+      page.getByText("Human review required", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(/generated implementation used limit/),
+    ).toBeVisible();
+    await inspect("04-baseline");
+    const patch = page.locator("section").filter({
+      has: page.getByRole("heading", { name: "Patch", exact: true }),
+    });
+    await patch
+      .locator("summary")
+      .filter({ hasText: "src/routes/customers.ts" })
+      .click();
+    await expect(patch.locator("pre")).toContainText("limit");
+    await page
+      .getByRole("link", { name: "Diagnose failure →", exact: true })
+      .click();
+    await expect(page).toHaveURL(`${experiment}/diagnosis`);
+    await expect(page.getByText("CONTEXT GAP", { exact: true })).toBeVisible();
+    await page.getByText("View diagnosis evidence", { exact: true }).click();
+    await expect(
+      page.getByText("View diagnosis evidence", { exact: true }).locator(".."),
+    ).toContainText("API");
+    await inspect("05-diagnosis");
+    await page
+      .getByRole("link", { name: "Review improved setup →", exact: true })
+      .click();
+    await expect(page).toHaveURL(`${experiment}/setup`);
+    await expect(
+      page.getByText("Approved · historical record", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByLabel("docs/api-conventions.md", { exact: true }),
+    ).toBeChecked();
+    await expect(
+      page.getByLabel("docs/api-conventions.md", { exact: true }),
+    ).toBeDisabled();
+    await expect(
+      page.getByRole("button", { name: "Approve intervention", exact: true }),
+    ).toHaveCount(0);
+    await inspect("06-approved-setup");
+    await page
+      .getByRole("link", { name: "View recorded rerun →", exact: true })
+      .click();
+    await expect(page).toHaveURL(after);
+    await expect(
+      page.getByText("Accepted by benchmark checks", { exact: true }),
+    ).toBeVisible();
+    await inspect("07-rerun");
+    await page
+      .getByRole("link", { name: "Compare results →", exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Experiment complete", exact: true }),
+    ).toBeVisible();
+    const result = page.getByRole("table", {
+      name: "Experiment result",
+      exact: true,
+    });
+    for (const value of [
+      "7/11",
+      "11/11",
+      "2/16",
+      "16/16",
+      "19.429s",
+      "11.187s",
+      "3,720",
+      "4,221",
+    ])
+      await expect(
+        result.getByRole("cell", { name: value, exact: true }),
+      ).toBeVisible();
+    await expect(
+      page.getByRole("region", { name: "Recommendation" }),
+    ).toContainText("Keep human review enabled");
+    await expect(
+      page.getByRole("region", { name: "Recommendation" }),
+    ).toContainText("20–30");
+    await inspect("08-comparison");
+    await page
+      .getByText("View complete experiment evidence", { exact: true })
+      .click();
+    await page.getByText("View raw evidence", { exact: true }).click();
+    await expect(
+      page.getByText("View raw evidence", { exact: true }).locator(".."),
+    ).toContainText("proposalSha256");
+    expect(mutations).toEqual([]);
+    expect(errors).toEqual([]);
+  });
+}

@@ -58,7 +58,7 @@ npm run benchmark:setup
 npm run dev
 ```
 
-Open http://localhost:3000/verification to execute baseline readiness or either pagination patch. Overview and Experiments prioritize the saved real comparison; illustrative runs and cohorts remain available in collapsed sections. Verification controls are available only with `npm run dev` and are disabled in production.
+Open http://localhost:3000/verification to execute baseline readiness or either pagination patch. Overview starts the recorded product walkthrough; Experiments lists saved comparisons. Illustrative runs and cohorts remain available in collapsed sections. Verification controls are available only with `npm run dev` and are disabled in production.
 
 ```sh
 npm run typecheck
@@ -109,9 +109,9 @@ The additional browser suite uses production port 3102 with demo mode on, blank 
 
 ## UI organization
 
-Primary navigation is Overview, Runs, Experiments, Engagement, and Architecture. Overview and Experiments lead with the saved real pagination comparison; Overview links to its full evidence in one click. Runs defaults to coding outcomes, groups provider incidents without counting them as coding failures, and keeps illustrative records behind an explicit disclosure. Fixture policy levels are unchanged and labeled illustrative.
+Primary navigation is Overview, Runs, Experiments, Engagement, and Architecture. Overview leads with Start experiment and recent activity; Experiments lists measured comparisons. The recorded walkthrough follows `/experiments/new` → saved baseline → saved diagnosis → approved setup → saved rerun → comparison and pilot recommendation. Task setup uses the original run contexts. Diagnosis and setup views live under `/experiments/real/[id]/diagnosis` and `/experiments/real/[id]/setup`. These navigation steps make no provider calls, approvals, or record writes; historical approval is labeled explicitly. Local execution remains accessible through the existing Coding Agent controls. Runs defaults to coding outcomes, groups provider incidents without counting them as coding failures, and keeps illustrative records behind an explicit disclosure. Fixture policy levels are unchanged and labeled illustrative.
 
-Run details separate Task, Context, Patch, Evaluation, Review decision, and Diagnosis. Full prompts, logs, approval rationale, and raw provenance remain inspectable behind disclosures. For real pagination runs, **critical failure** specifically means a failed evaluator-marked legacy API compatibility assertion; other contract failures still fail acceptance without necessarily being critical. No evaluator semantics changed.
+Run details separate Task, Agent setup, Patch, Evaluation, Review decision, and Diagnosis. Full prompts, logs, approval rationale, and raw provenance remain inspectable behind disclosures. For real pagination runs, **critical failure** specifically means a failed evaluator-marked legacy API compatibility assertion; other contract failures still fail acceptance without necessarily being critical. No evaluator semantics changed.
 
 Northstar is an engagement workspace: workflow, constraints, hypothesis, measured comparison, pilot policy, rollout, and illustrative ROI. The product thesis and broader scientific cautions remain documented here and in the ADRs rather than repeated on every screen. Local execution controls and hosted-demo protections are unchanged.
 

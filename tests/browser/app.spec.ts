@@ -107,9 +107,7 @@ test("illustrative detail retains contract failure, exact inputs, disabled actio
   page,
 }) => {
   await page.goto("/experiments");
-  await page
-    .getByText("Illustrative cohort · EXP-004", { exact: true })
-    .click();
+  await page.getByText("Illustrative data · EXP-004", { exact: true }).click();
   await page.getByRole("link", { name: "Baseline fixture →" }).click();
   await expect(page).toHaveURL(/\/runs\/SL-1042$/);
   await expect(

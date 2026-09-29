@@ -70,9 +70,11 @@ export function DiagnoseButton({
 export function ExperimentControls({
   experiment,
   readOnly = false,
+  compact = false,
 }: {
   experiment: RealExperiment;
   readOnly?: boolean;
+  compact?: boolean;
 }) {
   const router = useRouter();
   const [record, setRecord] = useState(experiment);
@@ -113,6 +115,24 @@ export function ExperimentControls({
       setBusy(false);
     }
   }
+  const rationale = (
+    <>
+      <label className="rationale-field">
+        Intervention rationale
+        <textarea
+          aria-label="Intervention rationale"
+          disabled={!editable || busy}
+          rows={5}
+          maxLength={4000}
+          value={draft.rationale}
+          onChange={(event) =>
+            update({ ...draft, rationale: event.target.value })
+          }
+        />
+      </label>
+      <p>Rationale stays outside the coding prompt.</p>
+    </>
+  );
   return (
     <div className="intervention-editor">
       <p>
@@ -193,20 +213,14 @@ export function ExperimentControls({
         ))}
         <p>Prompt expectations. The full evaluator runs unchanged.</p>
       </fieldset>
-      <label className="rationale-field">
-        Intervention rationale
-        <textarea
-          aria-label="Intervention rationale"
-          disabled={!editable || busy}
-          rows={5}
-          maxLength={4000}
-          value={draft.rationale}
-          onChange={(event) =>
-            update({ ...draft, rationale: event.target.value })
-          }
-        />
-      </label>
-      <p>Rationale stays outside the coding prompt.</p>
+      {compact ? (
+        <details className="inline-details">
+          <summary>View rationale</summary>
+          {rationale}
+        </details>
+      ) : (
+        rationale
+      )}
       {editable && (
         <>
           <button

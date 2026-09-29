@@ -3,11 +3,7 @@ import { Badge, SectionHeading } from "./ui";
 import { loadEngagementEvidence } from "@/lib/engagement/evidence";
 import { canViewRealEvidence } from "@/lib/demo-mode";
 
-export async function RealExperimentSummary({
-  overview = false,
-}: {
-  overview?: boolean;
-}) {
+export async function RealExperimentSummary() {
   const evidence = await loadEngagementEvidence();
   const counts = (suite?: {
     passed: number;
@@ -25,7 +21,7 @@ export async function RealExperimentSummary({
             className="button primary"
             href={`/experiments/real/${evidence.experiment.id}`}
           >
-            {overview ? "See what changed →" : "View experiment"}
+            View experiment
           </Link>
         )}
       </SectionHeading>
@@ -77,13 +73,6 @@ export async function RealExperimentSummary({
               </tbody>
             </table>
           </div>
-          {overview && (
-            <p className="card-content">
-              Same model. Same task. Same evaluator. Adding repository
-              conventions and explicit acceptance criteria turned a failed run
-              into a passing one.
-            </p>
-          )}
           <div className="panel-footnote">
             *Controlled benchmark result. Not a production auto-merge
             recommendation.

@@ -179,7 +179,9 @@ test("saved real runs expose exact inputs and honest review evidence", async ({
   await expect(
     page.getByRole("heading", { name: "Review decision" }),
   ).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Context" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Agent setup" }),
+  ).toBeVisible();
   await page.getByText("View full prompt", { exact: true }).click();
   await expect(
     page
@@ -248,6 +250,11 @@ test("real experiment keeps hypothesis, editable proposal, approval, and executi
       });
     });
     await link.click();
+    const fullEvidence = page.getByText("View complete experiment evidence", {
+      exact: true,
+    });
+    if ((await fullEvidence.locator("..").getAttribute("open")) === null)
+      await fullEvidence.click();
     for (const name of ["What failed", "Hypothesis", "Evidence", "Conclusion"])
       await expect(
         page.getByRole("heading", { name, exact: true }),

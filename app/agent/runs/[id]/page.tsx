@@ -21,6 +21,8 @@ export default async function AgentRunPage({
     (record) =>
       record.baselineRunId === run.id || record.interventionRunId === run.id,
   );
+  const related = experiments[0];
+  const isBaseline = related?.baselineRunId === run.id;
   const incident = run.status === "PROVIDER_ERROR";
   return (
     <div className="workspace-stack">
@@ -33,6 +35,43 @@ export default async function AgentRunPage({
           All runs
         </Link>
       </PageHeading>
+      {related && (
+        <section className="panel real-summary">
+          <SectionHeading
+            title={isBaseline ? "What went wrong" : "Rerun complete"}
+          />
+          <div className="card-content">
+            {isBaseline && run.id === "4b299b77-b63f-4ee3-ae13-06c5e0d2f956" ? (
+              <p>
+                The generated implementation used limit instead of the
+                repository’s pageSize contract and violated existing
+                response/error behavior.
+              </p>
+            ) : (
+              <p>
+                {isBaseline
+                  ? "Inspect the recorded failure hypothesis."
+                  : "The context-rich setup was evaluated against the same benchmark checks."}
+              </p>
+            )}
+            <div className="row-actions">
+              <Link
+                className="button primary"
+                href={
+                  isBaseline
+                    ? `/experiments/real/${related.id}/diagnosis`
+                    : `/experiments/real/${related.id}`
+                }
+              >
+                {isBaseline ? "Diagnose failure →" : "Compare results →"}
+              </Link>
+              <span className="muted">
+                {isBaseline ? "Opens saved diagnosis" : "Recorded results"}
+              </span>
+            </div>
+          </div>
+        </section>
+      )}
       <section className="panel">
         <SectionHeading title="Review decision" />
         <div className="card-content decision-row">
@@ -73,8 +112,10 @@ export default async function AgentRunPage({
           </div>
         </section>
         <section className="panel">
-          <SectionHeading title="Context">
-            <span className="small-chip">{run.context.files.length} files</span>
+          <SectionHeading title="Agent setup">
+            <span className="small-chip">
+              {run.configId} · {run.context.files.length} files
+            </span>
           </SectionHeading>
           <div className="card-content">
             {run.context.files.map((file) => (
@@ -103,42 +144,6 @@ export default async function AgentRunPage({
           </div>
         </section>
       </div>
-      <section className="panel">
-        <SectionHeading title="Patch">
-          <span className="small-chip">
-            {run.proposedFiles.length} proposed · {run.appliedFiles.length}{" "}
-            applied
-          </span>
-        </SectionHeading>
-        <div className="card-content">
-          {run.proposedFiles.length ? (
-            run.proposedFiles.map((file) => (
-              <details className="file-disclosure" key={file.path}>
-                <summary>
-                  <code>{file.path}</code>
-                  <span className="small-chip">
-                    {run.appliedFiles.includes(file.path)
-                      ? "Applied"
-                      : "Not applied"}
-                  </span>
-                </summary>
-                <pre className="agent-code">
-                  <code>{file.content}</code>
-                </pre>
-              </details>
-            ))
-          ) : (
-            <p className="muted">No code proposed.</p>
-          )}
-          {run.rejectedPaths.length > 0 && (
-            <p className="text-bad">Rejected: {run.rejectedPaths.join(", ")}</p>
-          )}
-          <details className="inline-details">
-            <summary>Agent summary</summary>
-            <p>{run.summary || "Not available"}</p>
-          </details>
-        </div>
-      </section>
       {run.evaluation ? (
         <>
           <RunResultSummary result={run.evaluation} />
@@ -178,6 +183,42 @@ export default async function AgentRunPage({
           <p className="card-content muted">Not evaluated.</p>
         </section>
       )}
+      <section className="panel">
+        <SectionHeading title="Patch">
+          <span className="small-chip">
+            {run.proposedFiles.length} proposed · {run.appliedFiles.length}{" "}
+            applied
+          </span>
+        </SectionHeading>
+        <div className="card-content">
+          {run.proposedFiles.length ? (
+            run.proposedFiles.map((file) => (
+              <details className="file-disclosure" key={file.path}>
+                <summary>
+                  <code>{file.path}</code>
+                  <span className="small-chip">
+                    {run.appliedFiles.includes(file.path)
+                      ? "Applied"
+                      : "Not applied"}
+                  </span>
+                </summary>
+                <pre className="agent-code">
+                  <code>{file.content}</code>
+                </pre>
+              </details>
+            ))
+          ) : (
+            <p className="muted">No code proposed.</p>
+          )}
+          {run.rejectedPaths.length > 0 && (
+            <p className="text-bad">Rejected: {run.rejectedPaths.join(", ")}</p>
+          )}
+          <details className="inline-details">
+            <summary>Agent summary</summary>
+            <p>{run.summary || "Not available"}</p>
+          </details>
+        </div>
+      </section>
       {(experiments.length > 0 ||
         (run.configId === "baseline" && run.status === "FAILED")) && (
         <section className="panel">

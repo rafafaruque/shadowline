@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PageHeading, SectionHeading } from "@/components/ui";
-import { RealExperimentSummary } from "@/components/real-experiment-summary";
+import { ExperimentHistory } from "@/components/experiment-history";
 import { RealRunTable } from "@/components/real-run-log";
 import { AutonomyMap } from "@/components/autonomy-map";
 import { loadEngagementEvidence } from "@/lib/engagement/evidence";
@@ -13,24 +13,15 @@ export default async function Dashboard() {
     <div className="workspace-stack">
       <PageHeading
         title="Shadowline"
-        description="Improve how coding agents are given work, then measure whether the changes actually make them more reliable."
-      />
-      <RealExperimentSummary overview />
-      <ol className="homepage-workflow" aria-label="Shadowline workflow">
-        <li>Run agent</li>
-        <li>Verify with tests</li>
-        <li>Test an improvement</li>
-        <li>Update review policy</li>
-      </ol>
-      <section className="panel" aria-label="Current recommendation">
-        <SectionHeading title="Current recommendation">
-          <span className="config-tag">API changes · PILOT</span>
-        </SectionHeading>
-        <p className="card-content">
-          Use the context-rich task template. Keep human review enabled while
-          more evidence accumulates.
-        </p>
-      </section>
+        description="Test and improve coding-agent workflows."
+      >
+        {canViewRealEvidence() && (
+          <Link className="button primary" href="/experiments/new">
+            Start experiment →
+          </Link>
+        )}
+      </PageHeading>
+      <ExperimentHistory recent />
       <section className="panel">
         <SectionHeading title="Recent runs">
           <Link className="text-link" href="/runs">
