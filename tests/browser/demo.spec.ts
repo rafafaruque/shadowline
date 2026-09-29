@@ -38,7 +38,7 @@ test("hosted demo preserves all inspection views and labels real versus illustra
     hero.getByRole("cell", { name: "16 / 16", exact: true }),
   ).toBeVisible();
   await hero
-    .getByRole("link", { name: "View experiment", exact: true })
+    .getByRole("link", { name: "See what changed →", exact: true })
     .click();
   await expect(page).toHaveURL(experiment);
   await expect(page.getByText("CONTEXT_GAP", { exact: true })).toBeVisible();

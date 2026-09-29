@@ -135,6 +135,7 @@ test("autonomy evidence is accessible and unknown IDs show a useful 404", async 
   page,
 }) => {
   await page.goto("/");
+  await page.getByText("Illustrative policy preview", { exact: true }).click();
   await page.locator("summary").filter({ hasText: "Database changes" }).click();
   await expect(
     page.getByText(

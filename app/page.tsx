@@ -13,10 +13,24 @@ export default async function Dashboard() {
     <div className="workspace-stack">
       <PageHeading
         title="Shadowline"
-        description="Coding-agent workflow health"
+        description="Improve how coding agents are given work, then measure whether the changes actually make them more reliable."
       />
-      <RealExperimentSummary />
-      <AutonomyMap />
+      <RealExperimentSummary overview />
+      <ol className="homepage-workflow" aria-label="Shadowline workflow">
+        <li>Run agent</li>
+        <li>Verify with tests</li>
+        <li>Test an improvement</li>
+        <li>Update review policy</li>
+      </ol>
+      <section className="panel" aria-label="Current recommendation">
+        <SectionHeading title="Current recommendation">
+          <span className="config-tag">API changes · PILOT</span>
+        </SectionHeading>
+        <p className="card-content">
+          Use the context-rich task template. Keep human review enabled while
+          more evidence accumulates.
+        </p>
+      </section>
       <section className="panel">
         <SectionHeading title="Recent runs">
           <Link className="text-link" href="/runs">
@@ -34,6 +48,10 @@ export default async function Dashboard() {
           </p>
         )}
       </section>
+      <details className="panel disclosure">
+        <summary>Illustrative policy preview</summary>
+        <AutonomyMap />
+      </details>
       <Link className="workspace-link" href="/engagement">
         <strong>Northstar Software</strong>
         <span>API workflow pilot</span>
