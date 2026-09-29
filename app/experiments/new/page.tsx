@@ -1,12 +1,9 @@
 import Link from "next/link";
+import type { RealAgentRun } from "@/lib/agent/schemas";
 import { notFound } from "next/navigation";
 import { PageHeading, SectionHeading } from "@/components/ui";
 import { loadEngagementEvidence } from "@/lib/engagement/evidence";
-import {
-  canViewRealEvidence,
-  canExecuteLocally,
-  isDemoMode,
-} from "@/lib/demo-mode";
+import { canViewRealEvidence, canExecuteLocally } from "@/lib/demo-mode";
 
 export const metadata = { title: "New experiment" };
 export default async function NewExperimentPage({
@@ -37,10 +34,7 @@ export default async function NewExperimentPage({
           setup ? "Add pagination to GET /customers" : "Choose a task"
         }
       >
-        <span className="small-chip">
-          {isDemoMode() ? "Recorded demo" : "Saved experiment"} ·{" "}
-          {setup ? "2" : "1"} / 2
-        </span>
+        <span className="small-chip">Step {setup ? "2" : "1"} / 2</span>
       </PageHeading>
       {!setup ? (
         <section className="panel">
@@ -88,58 +82,39 @@ export default async function NewExperimentPage({
                 ],
               ] as const
             ).map(([id, title, description]) => (
-              <Link
+              <section
                 key={id}
                 className={`panel setup-choice ${run.configId === id ? "selected" : ""}`}
-                href={`/experiments/new?step=setup&config=${id}`}
-                aria-current={run.configId === id ? "true" : undefined}
+                aria-label={`${title} configuration`}
               >
                 <strong>{title}</strong>
                 <p>{description}</p>
-                <span className="text-link">
+                {id === "baseline" && (
+                  <ul className="context-manifest">
+                    {saved.baseline.context.files.map((file) => (
+                      <li key={file.path}>
+                        <code>{file.path}</code>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <Link
+                  className="text-link"
+                  href={`/experiments/new?step=setup&config=${id}`}
+                  aria-current={run.configId === id ? "true" : undefined}
+                  aria-label={`${title} ${run.configId === id ? "Selected" : "Select setup"}`}
+                >
                   {run.configId === id ? "Selected" : "Select setup →"}
-                </span>
-              </Link>
+                </Link>
+                <ContextDetails
+                  run={id === "baseline" ? saved.baseline : saved.after}
+                />
+              </section>
             ))}
           </div>
-          <details className="panel disclosure">
-            <summary>View context · {run.context.files.length} files</summary>
-            <div className="card-content">
-              {run.context.files.map((file) => (
-                <details className="file-disclosure" key={file.path}>
-                  <summary>
-                    <code>{file.path}</code>
-                  </summary>
-                  <pre className="agent-code">
-                    <code>{file.content}</code>
-                  </pre>
-                </details>
-              ))}
-              <h3>Acceptance criteria</h3>
-              <ul className="compact-list">
-                {run.context.acceptanceCriteria.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-              {!run.context.acceptanceCriteria.length && (
-                <p className="muted">None supplied</p>
-              )}
-              <h3>Required checks</h3>
-              <p>{run.context.requiredChecks.join(" · ") || "None supplied"}</p>
-              <details className="inline-details">
-                <summary>View full prompt</summary>
-                <pre className="agent-code">
-                  <code>{run.context.systemPrompt}</code>
-                </pre>
-                <pre className="agent-code">
-                  <code>{run.context.userPrompt}</code>
-                </pre>
-              </details>
-            </div>
-          </details>
           <div className="row-actions">
             <Link className="button primary" href={`/agent/runs/${run.id}`}>
-              View recorded run →
+              Open recorded run →
             </Link>
             <Link href="/experiments/new">Back to task</Link>
             {canExecuteLocally() && (
@@ -149,5 +124,45 @@ export default async function NewExperimentPage({
         </>
       )}
     </div>
+  );
+}
+
+function ContextDetails({ run }: { run: RealAgentRun }) {
+  return (
+    <details className="inline-details">
+      <summary>View context · {run.context.files.length} files</summary>
+      <div className="card-content">
+        {run.context.files.map((file) => (
+          <details className="file-disclosure" key={file.path}>
+            <summary>
+              <code>{file.path}</code>
+            </summary>
+            <pre className="agent-code">
+              <code>{file.content}</code>
+            </pre>
+          </details>
+        ))}
+        <h3>Acceptance criteria</h3>
+        <ul className="compact-list">
+          {run.context.acceptanceCriteria.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+        {!run.context.acceptanceCriteria.length && (
+          <p className="muted">None supplied</p>
+        )}
+        <h3>Required checks</h3>
+        <p>{run.context.requiredChecks.join(" · ") || "None supplied"}</p>
+        <details className="inline-details">
+          <summary>View full coding prompt</summary>
+          <pre className="agent-code">
+            <code>{run.context.systemPrompt}</code>
+          </pre>
+          <pre className="agent-code">
+            <code>{run.context.userPrompt}</code>
+          </pre>
+        </details>
+      </div>
+    </details>
   );
 }

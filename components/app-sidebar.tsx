@@ -72,7 +72,7 @@ export function AppSidebar({ demoMode = false }: { demoMode?: boolean }) {
       )}
       <div className="sidebar-bottom">
         <span className="fixture-dot" />
-        {demoMode ? "Recorded demo" : "Local workspace"}
+        {demoMode ? "Read-only workspace" : "Local workspace"}
         <span className="version">v0.4</span>
       </div>
     </aside>
@@ -98,7 +98,7 @@ export function Topbar({ demoMode = false }: { demoMode?: boolean }) {
       <div className="topbar-right">
         {demoMode ? (
           <span className="demo-tag" aria-label="Hosted demo">
-            Recorded demo — live agent execution disabled
+            Recorded demo
           </span>
         ) : (
           <span className="repo-label">

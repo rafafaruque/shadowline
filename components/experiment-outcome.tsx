@@ -31,7 +31,7 @@ export function ExperimentOutcome({
     skipped: number;
   }) =>
     suite
-      ? `${suite.passed}/${suite.passed + suite.failed + suite.skipped}`
+      ? `${suite.passed} / ${suite.passed + suite.failed + suite.skipped}`
       : "Not evaluated";
   const rows = [
     [
@@ -40,7 +40,7 @@ export function ExperimentOutcome({
     ],
     ["Public tests", (r: RealAgentRun) => count(r.evaluation?.publicTests)],
     ["Contract tests", (r: RealAgentRun) => count(r.evaluation?.contractTests)],
-    ["Runtime", (r: RealAgentRun) => `${(r.durationMs / 1000).toFixed(3)}s`],
+    ["Runtime", (r: RealAgentRun) => `${(r.durationMs / 1000).toFixed(3)} s`],
     [
       "Tokens",
       (r: RealAgentRun) =>
@@ -53,7 +53,7 @@ export function ExperimentOutcome({
           ? "No patch"
           : r.requiresHumanReview
             ? "Required"
-            : "Not required in benchmark",
+            : "Benchmark passed",
     ],
   ] as const;
   return (
@@ -92,7 +92,7 @@ export function ExperimentOutcome({
         </div>
         <div className="panel-footnote">
           {same
-            ? "Same task · Same model · Same evaluator · Different task/context setup"
+            ? "Same task · Same model · Same evaluator · Different task setup"
             : "Check the full evidence before comparing these attempts."}
         </div>
         <div className="card-content row-actions">
@@ -116,13 +116,13 @@ export function ExperimentOutcome({
               Use the context-rich task template for similar API work. Keep
               human review enabled while more evidence accumulates.
             </p>
-            <h3>Next evidence required</h3>
+            <h3>Next step</h3>
             <p>
               Run this policy across 20–30 comparable API tasks before
               reconsidering review requirements.
             </p>
             <p className="muted">
-              One controlled benchmark; no production auto-merge recommendation.
+              This experiment supports the intervention on this benchmark only.
             </p>
           </div>
         </section>

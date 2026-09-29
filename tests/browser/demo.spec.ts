@@ -25,9 +25,7 @@ test("hosted demo preserves all inspection views and labels real versus illustra
   ]) {
     expect((await page.goto(route))?.status()).toBe(200);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.getByLabel("Hosted demo")).toContainText(
-      "Recorded demo — live agent execution disabled",
-    );
+    await expect(page.getByLabel("Hosted demo")).toContainText("Recorded demo");
   }
   await page.goto("/");
   const recent = page.getByRole("region", { name: "Recent experiment" });
@@ -223,6 +221,17 @@ for (const width of [1440, 390]) {
     page.on("pageerror", (error) => errors.push(error.message));
     await page.setViewportSize({ width, height: 900 });
     const inspect = async (step: string) => {
+      await expect(
+        page
+          .getByRole("navigation", { name: "Main navigation" })
+          .getByRole("link"),
+      ).toHaveText([
+        "Overview",
+        "Runs",
+        "Experiments",
+        "Engagement",
+        "Architecture",
+      ]);
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= innerWidth,
@@ -272,11 +281,13 @@ for (const width of [1440, 390]) {
     await page.getByRole("link", { name: /Baseline.*Select setup/ }).click();
     await page.getByText("View context · 4 files", { exact: true }).click();
     await expect(
-      page.locator("summary", { hasText: "docs/api-conventions.md" }),
+      page
+        .getByRole("region", { name: "Baseline configuration" })
+        .locator("summary", { hasText: "docs/api-conventions.md" }),
     ).toHaveCount(0);
     await inspect("03-agent-setup");
     await page
-      .getByRole("link", { name: "View recorded run →", exact: true })
+      .getByRole("link", { name: "Open recorded run →", exact: true })
       .click();
     await expect(page).toHaveURL(baseline);
     await expect(
@@ -286,6 +297,10 @@ for (const width of [1440, 390]) {
       page.getByText(/generated implementation used limit/),
     ).toBeVisible();
     await inspect("04-baseline");
+    await page
+      .locator("summary")
+      .filter({ hasText: "View generated patch" })
+      .click();
     const patch = page.locator("section").filter({
       has: page.getByRole("heading", { name: "Patch", exact: true }),
     });
@@ -298,7 +313,7 @@ for (const width of [1440, 390]) {
       .getByRole("link", { name: "Diagnose failure →", exact: true })
       .click();
     await expect(page).toHaveURL(`${experiment}/diagnosis`);
-    await expect(page.getByText("CONTEXT GAP", { exact: true })).toBeVisible();
+    await expect(page.getByText("Context gap", { exact: true })).toBeVisible();
     await page.getByText("View diagnosis evidence", { exact: true }).click();
     await expect(
       page.getByText("View diagnosis evidence", { exact: true }).locator(".."),
@@ -309,7 +324,7 @@ for (const width of [1440, 390]) {
       .click();
     await expect(page).toHaveURL(`${experiment}/setup`);
     await expect(
-      page.getByText("Approved · historical record", { exact: true }),
+      page.getByText("Approved in recorded experiment", { exact: true }),
     ).toBeVisible();
     await expect(
       page.getByLabel("docs/api-conventions.md", { exact: true }),
@@ -320,6 +335,26 @@ for (const width of [1440, 390]) {
     await expect(
       page.getByRole("button", { name: "Approve intervention", exact: true }),
     ).toHaveCount(0);
+    const approvedContext = page.getByRole("group", {
+      name: "Context",
+      exact: true,
+    });
+    await expect(approvedContext.getByRole("checkbox")).toHaveCount(6);
+    for (const file of [
+      "src/app.ts",
+      "src/routes/customers.ts",
+      "src/data/customers.ts",
+      "tests/customers.test.ts",
+      "docs/api-conventions.md",
+      "src/lib/pagination.ts",
+    ]) {
+      await expect(
+        approvedContext.getByLabel(file, { exact: true }),
+      ).toBeChecked();
+      await expect(
+        approvedContext.getByLabel(file, { exact: true }),
+      ).toBeDisabled();
+    }
     await inspect("06-approved-setup");
     await page
       .getByRole("link", { name: "View recorded rerun →", exact: true })
@@ -340,12 +375,12 @@ for (const width of [1440, 390]) {
       exact: true,
     });
     for (const value of [
-      "7/11",
-      "11/11",
-      "2/16",
-      "16/16",
-      "19.429s",
-      "11.187s",
+      "7 / 11",
+      "11 / 11",
+      "2 / 16",
+      "16 / 16",
+      "19.429 s",
+      "11.187 s",
       "3,720",
       "4,221",
     ])

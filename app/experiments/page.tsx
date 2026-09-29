@@ -36,7 +36,7 @@ export default function ExperimentsPage() {
       >
         {canViewRealEvidence() && (
           <Link className="button primary" href="/experiments/new">
-            Start experiment →
+            New experiment →
           </Link>
         )}
       </PageHeading>

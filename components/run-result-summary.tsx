@@ -3,7 +3,13 @@ import type { EvaluationResult } from "@/lib/domain/types";
 import { SectionHeading } from "./ui";
 import { CriticalStatus } from "./critical-status";
 
-export function RunResultSummary({ result }: { result: EvaluationResult }) {
+export function RunResultSummary({
+  result,
+  compact = false,
+}: {
+  result: EvaluationResult;
+  compact?: boolean;
+}) {
   const rows = [
     {
       label: "Typecheck",
@@ -26,7 +32,7 @@ export function RunResultSummary({ result }: { result: EvaluationResult }) {
       ] as const
     ).map(([label, suite]) => ({
       label,
-      value: `${suite.passed}/${suite.passed + suite.failed + suite.skipped}${suite.skipped ? ` · ${suite.skipped} skipped` : ""}`,
+      value: `${suite.passed}${compact ? " / " : "/"}${suite.passed + suite.failed + suite.skipped}${suite.skipped ? ` · ${suite.skipped} skipped` : ""}`,
       state: suite.failed
         ? "FAILED"
         : suite.skipped || suite.passed === 0
@@ -48,29 +54,37 @@ export function RunResultSummary({ result }: { result: EvaluationResult }) {
   ];
   return (
     <section className="panel">
-      <SectionHeading title="Evaluation" />
+      <SectionHeading title={compact ? "Tests & checks" : "Evaluation"} />
       <div className="evidence-list">
-        {rows.map(({ label, value, state }) => {
-          const Icon =
-            state === "PASSED" ? Check : state === "FAILED" ? X : CircleAlert;
-          return (
-            <div className="evidence-row" key={label}>
-              <span>{label}</span>
-              <strong
-                className={
-                  state === "PASSED"
-                    ? "text-good"
-                    : state === "FAILED"
-                      ? "text-bad"
-                      : "text-warn"
-                }
-              >
-                {value}
-                <Icon size={15} />
-              </strong>
-            </div>
-          );
-        })}
+        {rows
+          .filter(
+            (row) =>
+              !compact ||
+              ["Typecheck", "Public tests", "Contract tests"].includes(
+                row.label,
+              ),
+          )
+          .map(({ label, value, state }) => {
+            const Icon =
+              state === "PASSED" ? Check : state === "FAILED" ? X : CircleAlert;
+            return (
+              <div className="evidence-row" key={label}>
+                <span>{label}</span>
+                <strong
+                  className={
+                    state === "PASSED"
+                      ? "text-good"
+                      : state === "FAILED"
+                        ? "text-bad"
+                        : "text-warn"
+                  }
+                >
+                  {value}
+                  <Icon size={15} />
+                </strong>
+              </div>
+            );
+          })}
       </div>
       <div className="panel-footnote">
         <CriticalStatus value={result.criticalFailure} />

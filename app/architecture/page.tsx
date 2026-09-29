@@ -41,14 +41,21 @@ export default function ArchitecturePage() {
       <section className="panel">
         <SectionHeading title="Execution boundary" />
         <div className="card-content">
-          <ol className="workflow-flow" aria-label="Architecture flow">
+          <ol
+            className="workflow-flow architecture-path"
+            aria-label="Architecture flow"
+          >
             {[
-              "Curated context",
-              "Provider proposal",
+              "Task",
+              "Agent configuration",
+              "Context builder",
+              "Coding agent",
+              "Structured patch",
               "Path validation",
-              "Isolated patch",
-              "Deterministic checks",
-              "Saved evidence",
+              "Isolated workspace",
+              "Deterministic evaluator",
+              "Result",
+              "Optional diagnosis / intervention",
             ].map((label, index) => (
               <li key={label}>
                 <span>{index + 1}</span>
@@ -77,7 +84,7 @@ export default function ArchitecturePage() {
       <section className="panel">
         <SectionHeading title="Local vs hosted">
           <span className="config-tag">
-            Current: {isDemoMode() ? "Recorded demo" : "Local"}
+            Current: {isDemoMode() ? "Hosted" : "Local"}
           </span>
         </SectionHeading>
         <div className="table-scroll">

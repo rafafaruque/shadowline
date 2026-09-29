@@ -30,10 +30,11 @@ export function RealRunTable({
         <thead>
           <tr>
             {[
-              "Task / provider",
+              "Task",
               "Configuration",
-              "Result",
-              "Tests · passed / total",
+              "Provider / model",
+              "Outcome",
+              "Checks · passed / total",
               "Review",
               "Runtime",
               "Started · UTC",
@@ -58,13 +59,14 @@ export function RealRunTable({
                 ) : (
                   "API pagination"
                 )}
-                <small>
-                  {row.provider} / {row.model}
-                </small>
               </td>
               <td>
                 {row.configId}
                 <small>{row.id.slice(0, 8)}</small>
+              </td>
+              <td>
+                {row.provider}
+                <small>{row.model}</small>
               </td>
               <td>
                 <Badge value={row.status} />

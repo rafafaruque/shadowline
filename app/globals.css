@@ -2809,3 +2809,27 @@ summary {
 .real-experiment .summary-table {
   min-width: 0;
 }
+
+.context-manifest {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 12px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.architecture-path {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.architecture-path li:nth-child(5)::after {
+  display: none;
+}
+@media (max-width: 1050px) {
+  .architecture-path {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .architecture-path li::after {
+    display: none;
+  }
+}

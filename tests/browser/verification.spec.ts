@@ -182,12 +182,12 @@ test("saved real runs expose exact inputs and honest review evidence", async ({
   await expect(
     page.getByRole("heading", { name: "Agent setup" }),
   ).toBeVisible();
-  await page.getByText("View full prompt", { exact: true }).click();
+  await page.getByText("View full coding prompt", { exact: true }).click();
   await expect(
     page
       .locator("details")
       .filter({
-        has: page.getByText("View full prompt", { exact: true }),
+        has: page.getByText("View full coding prompt", { exact: true }),
       })
       .getByText('"task": "Add pagination support to GET /customers."', {
         exact: false,

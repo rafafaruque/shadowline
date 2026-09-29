@@ -27,14 +27,106 @@ export default async function AgentRunPage({
   return (
     <div className="workspace-stack">
       <PageHeading
-        title="API pagination"
-        description={`${run.configId} · ${run.provider} / ${run.resolvedModel ?? run.model} · ${run.id.slice(0, 8)}`}
+        title={run.context.task.replace(/\.$/, "")}
+        description={`${run.configId === "baseline" ? "Baseline" : "Context-rich"} · ${run.provider === "codex-cli" ? "Codex" : run.provider} / ${(run.resolvedModel ?? run.model) === "gpt-6-astra" ? "GPT-6 Astra" : (run.resolvedModel ?? run.model)}`}
       >
         <Badge value={run.status} />
         <Link className="button secondary" href="/runs">
           All runs
         </Link>
       </PageHeading>
+      <div className="workspace-grid">
+        <section className="panel">
+          <SectionHeading title="Task" />
+          <div className="card-content">
+            <p>{run.context.task}</p>
+            <details className="inline-details">
+              <summary>Acceptance criteria &amp; scope</summary>
+              <ul className="compact-list">
+                {run.context.acceptanceCriteria.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              <p>Allowed paths: {run.context.allowedPaths.join(", ")}</p>
+              <p>
+                Requested checks:{" "}
+                {run.context.requiredChecks.join(" · ") || "None"}
+              </p>
+            </details>
+          </div>
+        </section>
+        <section className="panel">
+          <SectionHeading title="Agent setup">
+            <span className="small-chip">
+              {run.configId} · {run.context.files.length} files
+            </span>
+          </SectionHeading>
+          <div className="card-content">
+            <ul className="context-manifest">
+              {run.context.files.map((file) => (
+                <li key={file.path}>
+                  <code>{file.path}</code>
+                </li>
+              ))}
+            </ul>
+            <details className="inline-details">
+              <summary>View exact context</summary>
+              {run.context.files.map((file) => (
+                <details className="file-disclosure" key={file.path}>
+                  <summary>
+                    <code>{file.path}</code>
+                  </summary>
+                  <pre className="agent-code">
+                    <code>{file.content}</code>
+                  </pre>
+                  <p className="benchmark-hash">SHA-256: {file.sha256}</p>
+                </details>
+              ))}
+            </details>
+            <details className="inline-details">
+              <summary>View full coding prompt</summary>
+              <pre className="agent-code">
+                <code>{run.context.systemPrompt}</code>
+              </pre>
+              <pre className="agent-code">
+                <code>{run.context.userPrompt}</code>
+              </pre>
+              <p className="benchmark-hash">
+                SHA-256: {run.context.promptSha256}
+              </p>
+            </details>
+          </div>
+        </section>
+      </div>
+      <div className="workspace-grid">
+        {run.evaluation ? (
+          <RunResultSummary result={run.evaluation} compact />
+        ) : (
+          <section className="panel">
+            <SectionHeading title="Tests & checks" />
+            <p className="card-content muted">Not evaluated.</p>
+          </section>
+        )}
+        <section className="panel">
+          <SectionHeading title="Review decision" />
+          <div className="card-content decision-row">
+            <strong>
+              {incident
+                ? "Provider unavailable · no coding outcome"
+                : run.requiresHumanReview
+                  ? "Human review required"
+                  : "Accepted by benchmark checks"}
+            </strong>
+            <span className="muted">
+              {incident
+                ? "Excluded from coding failures, acceptance rates, and autonomy evidence."
+                : !run.requiresHumanReview
+                  ? "Benchmark acceptance only; no production merge approval."
+                  : "Deterministic acceptance failed or remains incomplete."}
+            </span>
+          </div>
+        </section>
+      </div>
       {related && (
         <section className="panel real-summary">
           <SectionHeading
@@ -72,86 +164,14 @@ export default async function AgentRunPage({
           </div>
         </section>
       )}
-      <section className="panel">
-        <SectionHeading title="Review decision" />
-        <div className="card-content decision-row">
-          <strong>
-            {incident
-              ? "Provider unavailable · no coding outcome"
-              : run.requiresHumanReview
-                ? "Human review required"
-                : "Accepted by benchmark checks"}
-          </strong>
-          <span className="muted">
-            {incident
-              ? "Excluded from coding failures, acceptance rates, and autonomy evidence."
-              : !run.requiresHumanReview
-                ? "Benchmark acceptance only; no production merge approval."
-                : "Deterministic acceptance failed or remains incomplete."}
-          </span>
-        </div>
-      </section>
-      <div className="workspace-grid">
-        <section className="panel">
-          <SectionHeading title="Task" />
-          <div className="card-content">
-            <p>{run.context.task}</p>
-            <details className="inline-details">
-              <summary>Acceptance criteria &amp; scope</summary>
-              <ul className="compact-list">
-                {run.context.acceptanceCriteria.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-              <p>Allowed paths: {run.context.allowedPaths.join(", ")}</p>
-              <p>
-                Requested checks:{" "}
-                {run.context.requiredChecks.join(" · ") || "None"}
-              </p>
-            </details>
-          </div>
-        </section>
-        <section className="panel">
-          <SectionHeading title="Agent setup">
-            <span className="small-chip">
-              {run.configId} · {run.context.files.length} files
-            </span>
-          </SectionHeading>
-          <div className="card-content">
-            {run.context.files.map((file) => (
-              <details className="file-disclosure" key={file.path}>
-                <summary>
-                  <code>{file.path}</code>
-                </summary>
-                <pre className="agent-code">
-                  <code>{file.content}</code>
-                </pre>
-                <p className="benchmark-hash">SHA-256: {file.sha256}</p>
-              </details>
-            ))}
-            <details className="inline-details">
-              <summary>View full prompt</summary>
-              <pre className="agent-code">
-                <code>{run.context.systemPrompt}</code>
-              </pre>
-              <pre className="agent-code">
-                <code>{run.context.userPrompt}</code>
-              </pre>
-              <p className="benchmark-hash">
-                SHA-256: {run.context.promptSha256}
-              </p>
-            </details>
-          </div>
-        </section>
-      </div>
       {run.evaluation ? (
         <>
-          <RunResultSummary result={run.evaluation} />
           <details className="panel disclosure">
             <summary>
-              View logs · {run.evaluation.failureDetails.length} findings
+              View test output · {run.evaluation.failureDetails.length} findings
             </summary>
             <div className="card-content">
+              <RunResultSummary result={run.evaluation} />
               {run.evaluation.failureDetails.map((failure, index) => (
                 <pre className="agent-code text-bad" key={index}>
                   <code>{failure}</code>
@@ -177,111 +197,124 @@ export default async function AgentRunPage({
             </div>
           </details>
         </>
-      ) : (
+      ) : null}
+      <details className="panel disclosure">
+        <summary>
+          View generated patch · {run.proposedFiles.length} proposed ·{" "}
+          {run.appliedFiles.length} applied
+        </summary>
         <section className="panel">
-          <SectionHeading title="Evaluation" />
-          <p className="card-content muted">Not evaluated.</p>
-        </section>
-      )}
-      <section className="panel">
-        <SectionHeading title="Patch">
-          <span className="small-chip">
-            {run.proposedFiles.length} proposed · {run.appliedFiles.length}{" "}
-            applied
-          </span>
-        </SectionHeading>
-        <div className="card-content">
-          {run.proposedFiles.length ? (
-            run.proposedFiles.map((file) => (
-              <details className="file-disclosure" key={file.path}>
-                <summary>
-                  <code>{file.path}</code>
-                  <span className="small-chip">
-                    {run.appliedFiles.includes(file.path)
-                      ? "Applied"
-                      : "Not applied"}
-                  </span>
-                </summary>
-                <pre className="agent-code">
-                  <code>{file.content}</code>
-                </pre>
-              </details>
-            ))
-          ) : (
-            <p className="muted">No code proposed.</p>
-          )}
-          {run.rejectedPaths.length > 0 && (
-            <p className="text-bad">Rejected: {run.rejectedPaths.join(", ")}</p>
-          )}
-          <details className="inline-details">
-            <summary>Agent summary</summary>
-            <p>{run.summary || "Not available"}</p>
-          </details>
-        </div>
-      </section>
-      {(experiments.length > 0 ||
-        (run.configId === "baseline" && run.status === "FAILED")) && (
-        <section className="panel">
-          <SectionHeading title="Diagnosis" />
+          <SectionHeading title="Patch">
+            <span className="small-chip">
+              {run.proposedFiles.length} proposed · {run.appliedFiles.length}{" "}
+              applied
+            </span>
+          </SectionHeading>
           <div className="card-content">
-            {experiments.map((record) => (
-              <p key={record.id}>
-                <Link
-                  className="text-link"
-                  href={`/experiments/real/${record.id}`}
-                >
-                  {record.baselineRunId !== run.id
-                    ? "Baseline hypothesis · "
-                    : ""}
-                  {record.diagnosis.output?.primaryClassification ??
-                    record.status}{" "}
-                  · View experiment →
-                </Link>
-              </p>
-            ))}
-            {!experiments.length && (
-              <DiagnoseButton baselineRunId={run.id} readOnly={isDemoMode()} />
+            {run.proposedFiles.length ? (
+              run.proposedFiles.map((file) => (
+                <details className="file-disclosure" key={file.path}>
+                  <summary>
+                    <code>{file.path}</code>
+                    <span className="small-chip">
+                      {run.appliedFiles.includes(file.path)
+                        ? "Applied"
+                        : "Not applied"}
+                    </span>
+                  </summary>
+                  <pre className="agent-code">
+                    <code>{file.content}</code>
+                  </pre>
+                </details>
+              ))
+            ) : (
+              <p className="muted">No code proposed.</p>
             )}
+            {run.rejectedPaths.length > 0 && (
+              <p className="text-bad">
+                Rejected: {run.rejectedPaths.join(", ")}
+              </p>
+            )}
+            <details className="inline-details">
+              <summary>Agent summary</summary>
+              <p>{run.summary || "Not available"}</p>
+            </details>
           </div>
         </section>
+      </details>
+      {(experiments.length > 0 ||
+        (run.configId === "baseline" && run.status === "FAILED")) && (
+        <details className="panel disclosure" open={!experiments.length}>
+          <summary>View diagnosis evidence</summary>
+          <section className="panel">
+            <SectionHeading title="Diagnosis" />
+            <div className="card-content">
+              {experiments.map((record) => (
+                <p key={record.id}>
+                  <Link
+                    className="text-link"
+                    href={`/experiments/real/${record.id}`}
+                  >
+                    {record.baselineRunId !== run.id
+                      ? "Baseline hypothesis · "
+                      : ""}
+                    {record.diagnosis.output?.primaryClassification ??
+                      record.status}{" "}
+                    · View experiment →
+                  </Link>
+                </p>
+              ))}
+              {!experiments.length && (
+                <DiagnoseButton
+                  baselineRunId={run.id}
+                  readOnly={isDemoMode()}
+                />
+              )}
+            </div>
+          </section>
+        </details>
       )}
-      <section className="panel">
-        <SectionHeading title="Execution" />
-        <div className="card-content">
-          <dl className="compact-metrics">
-            <div>
-              <dt>Runtime</dt>
-              <dd>{(run.durationMs / 1000).toFixed(3)}s</dd>
-            </div>
-            <div>
-              <dt>Tokens</dt>
-              <dd>
-                {run.tokenUsage?.total.toLocaleString("en-US") ?? "Unavailable"}
-              </dd>
-            </div>
-            <div>
-              <dt>Inference cost</dt>
-              <dd>
-                {run.estimatedInferenceCost === null
-                  ? "Unknown"
-                  : `$${run.estimatedInferenceCost.toFixed(6)}`}
-              </dd>
-            </div>
-          </dl>
-          {run.errors.map((error, index) => (
-            <p className="text-warn" key={index}>
-              {error}
-            </p>
-          ))}
-          <details className="inline-details">
-            <summary>View raw evidence</summary>
-            <pre className="agent-code">
-              <code>{JSON.stringify(run, null, 2)}</code>
-            </pre>
-          </details>
-          <DemoEvidenceNote />
-        </div>
-      </section>
+      <details className="panel disclosure">
+        <summary>View hashes &amp; provenance</summary>
+        <section className="panel">
+          <SectionHeading title="Execution" />
+          <div className="card-content">
+            <dl className="compact-metrics">
+              <div>
+                <dt>Runtime</dt>
+                <dd>{(run.durationMs / 1000).toFixed(3)}s</dd>
+              </div>
+              <div>
+                <dt>Tokens</dt>
+                <dd>
+                  {run.tokenUsage?.total.toLocaleString("en-US") ??
+                    "Unavailable"}
+                </dd>
+              </div>
+              <div>
+                <dt>Inference cost</dt>
+                <dd>
+                  {run.estimatedInferenceCost === null
+                    ? "Unknown"
+                    : `$${run.estimatedInferenceCost.toFixed(6)}`}
+                </dd>
+              </div>
+            </dl>
+            {run.errors.map((error, index) => (
+              <p className="text-warn" key={index}>
+                {error}
+              </p>
+            ))}
+            <details className="inline-details">
+              <summary>View raw evidence</summary>
+              <pre className="agent-code">
+                <code>{JSON.stringify(run, null, 2)}</code>
+              </pre>
+            </details>
+            <DemoEvidenceNote />
+          </div>
+        </section>
+      </details>
     </div>
   );
 }
