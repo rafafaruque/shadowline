@@ -240,8 +240,20 @@ for (const width of [1440, 390]) {
       }),
     ).toBeVisible();
     await inspect("01-home");
+    await expect(
+      page.locator("main").getByRole("heading", { level: 2 }),
+    ).toHaveText(["Recent experiment", "Recent runs"]);
+    await expect(
+      page
+        .getByRole("table", { name: "Recorded real runs" })
+        .locator("tbody tr"),
+    ).toHaveCount(2);
+    await expect(
+      page.locator("main").getByRole("region", { name: "Recommendation" }),
+    ).toHaveCount(0);
+    await expect(page.locator("#autonomy")).toHaveCount(0);
     await page
-      .getByRole("link", { name: "Start experiment →", exact: true })
+      .getByRole("link", { name: "Start experiment", exact: true })
       .click();
     await expect(page).toHaveURL("/experiments/new");
     await inspect("02-task");

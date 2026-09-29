@@ -2,7 +2,6 @@ import Link from "next/link";
 import { PageHeading, SectionHeading } from "@/components/ui";
 import { ExperimentHistory } from "@/components/experiment-history";
 import { RealRunTable } from "@/components/real-run-log";
-import { AutonomyMap } from "@/components/autonomy-map";
 import { loadEngagementEvidence } from "@/lib/engagement/evidence";
 import { runRows } from "@/lib/presentation/run-rows";
 import { canViewRealEvidence } from "@/lib/demo-mode";
@@ -17,7 +16,7 @@ export default async function Dashboard() {
       >
         {canViewRealEvidence() && (
           <Link className="button primary" href="/experiments/new">
-            Start experiment →
+            Start experiment
           </Link>
         )}
       </PageHeading>
@@ -39,15 +38,6 @@ export default async function Dashboard() {
           </p>
         )}
       </section>
-      <details className="panel disclosure">
-        <summary>Illustrative policy preview</summary>
-        <AutonomyMap />
-      </details>
-      <Link className="workspace-link" href="/engagement">
-        <strong>Northstar Software</strong>
-        <span>API workflow pilot</span>
-        <span>Open engagement →</span>
-      </Link>
     </div>
   );
 }

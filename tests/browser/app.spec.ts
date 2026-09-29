@@ -5,7 +5,10 @@ test("engagement keeps measured evidence separate from the pilot and illustrativ
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("link", { name: /Northstar Software/ }).click();
+  await page
+    .getByRole("navigation", { name: "Main navigation" })
+    .getByRole("link", { name: "Engagement", exact: true })
+    .click();
   await expect(
     page.getByRole("heading", { name: "Northstar Software", exact: true }),
   ).toBeVisible();
@@ -129,17 +132,14 @@ test("illustrative detail retains contract failure, exact inputs, disabled actio
   ).toBeVisible();
 });
 
-test("autonomy evidence is accessible and unknown IDs show a useful 404", async ({
+test("homepage stays focused on activity and unknown IDs show a useful 404", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByText("Illustrative policy preview", { exact: true }).click();
-  await page.locator("summary").filter({ hasText: "Database changes" }).click();
   await expect(
-    page.getByText(
-      "High-impact work requires human ownership. 2 critical failure(s) in the evidence window.",
-    ),
-  ).toBeVisible();
+    page.locator("main").getByRole("heading", { level: 2 }),
+  ).toHaveText(["Recent experiment", "Recent runs"]);
+  await expect(page.locator("#autonomy")).toHaveCount(0);
   const response = await page.goto("/runs/not-a-real-run");
   expect(response?.status()).toBe(404);
   await expect(
