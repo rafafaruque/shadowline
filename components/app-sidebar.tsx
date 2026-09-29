@@ -75,13 +75,15 @@ export function AppSidebar() {
       </div>
       <div className="sidebar-bottom">
         <span className="fixture-dot" />
-        {pathname.startsWith("/experiments/real")
-          ? "Real experiments"
-          : pathname.startsWith("/agent")
-            ? "Real agent runs"
-            : pathname === "/verification"
-              ? "Local verification"
-              : "Fixture mode"}
+        {pathname === "/engagement"
+          ? "Customer engagement"
+          : pathname.startsWith("/experiments/real")
+            ? "Real experiments"
+            : pathname.startsWith("/agent")
+              ? "Real agent runs"
+              : pathname === "/verification"
+                ? "Local verification"
+                : "Fixture mode"}
         <span className="version">v0.4</span>
       </div>
     </aside>
@@ -89,15 +91,18 @@ export function AppSidebar() {
 }
 export function Topbar() {
   const pathname = usePathname();
-  const section = pathname.startsWith("/agent")
-    ? "Coding agent"
-    : pathname.startsWith("/verification")
-      ? "Benchmark verification"
-      : pathname.startsWith("/experiments")
-        ? "Experiments"
-        : pathname.startsWith("/runs")
-          ? "Benchmark runs"
-          : "Overview";
+  const section =
+    pathname === "/engagement"
+      ? "Customer engagement"
+      : pathname.startsWith("/agent")
+        ? "Coding agent"
+        : pathname.startsWith("/verification")
+          ? "Benchmark verification"
+          : pathname.startsWith("/experiments")
+            ? "Experiments"
+            : pathname.startsWith("/runs")
+              ? "Benchmark runs"
+              : "Overview";
   return (
     <div className="topbar">
       <div className="breadcrumbs">
@@ -122,11 +127,13 @@ export function EvidenceFooter() {
     <footer className="app-footer">
       <span>
         <span className="fixture-dot" />
-        {pathname === "/verification" ||
-        pathname.startsWith("/agent") ||
-        pathname.startsWith("/experiments/real")
-          ? "Live benchmark evidence · aggregate dashboards remain fixtures"
-          : "All results are illustrative fixtures"}
+        {pathname === "/engagement"
+          ? "Illustrative customer assumptions · saved real benchmark evidence"
+          : pathname === "/verification" ||
+              pathname.startsWith("/agent") ||
+              pathname.startsWith("/experiments/real")
+            ? "Live benchmark evidence · aggregate dashboards remain fixtures"
+            : "All results are illustrative fixtures"}
       </span>
       <span>AI proposes. Deterministic software verifies.</span>
     </footer>

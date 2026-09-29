@@ -710,6 +710,9 @@ main {
 .experiment-teaser:hover {
   border-color: #a9bda9;
 }
+.engagement-teaser {
+  margin-bottom: 27px;
+}
 .teaser-icon {
   border: 1px solid #e4e9e0;
   background: #f5f7f1;

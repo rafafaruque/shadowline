@@ -6,6 +6,48 @@ Shadowline evaluates and improves coding-agent workflows, then uses evidence to 
 
 Coding agents increase implementation throughput, but uniform review requirements leave engineers inspecting every change with the same intensity. Teams need to understand failure causes, improve task inputs, and determine where autonomy is earned.
 
+## Example customer engagement
+
+[/engagement](http://localhost:3000/engagement) presents **Northstar Software**, a fictional 25-person B2B SaaS engineering organization. A small dashboard card opens the engagement. Its business assumptions are explicitly illustrative: **210 agent-generated tasks/month, 63 human review hours/month, and 23% requiring meaningful rework**. None are Shadowline measurements.
+
+### Existing workflow
+
+Linear ticket → engineer assembles context → coding agent → CI → senior engineer reviews → rework or merge. Manual, inconsistent context; uniform review; and individually repaired recurring failures are the three bottlenecks. This is a scenario, not a Linear or CI integration.
+
+### Customer constraints
+
+Contract checks protect existing APIs; isolated, curated coding context excludes hidden evaluation criteria; structured proposals and disabled/sandboxed coding-agent tools prevent arbitrary shell execution. Deterministic checks remain authoritative, high-risk work retains human review, and the generic provider interface keeps Codex CLI and Gemini usable. The engagement page maps all six requirements to these existing decisions; it grants no production permissions.
+
+### Hypothesis
+
+“API tasks may be failing because agents lack repository-specific context and explicit acceptance criteria, rather than because the model is incapable of performing the task.” This remains a hypothesis.
+
+### Real experiment
+
+The engagement reads the saved Phase 4 experiment `1ede9ceb-1c45-4d5f-9c39-9b638f65216d` and its two real run records. It uses no fixture fallback: without the local records, measurements are unavailable. The summary is read-only in development and production; full run inspection and execution remain development-only.
+
+| Measured evidence      | Baseline                | Context-rich            |
+| ---------------------- | ----------------------- | ----------------------- |
+| Provider / model       | codex-cli / gpt-6-astra | codex-cli / gpt-6-astra |
+| Public tests           | 7 passed / 4 failed     | 11 passed / 0 failed    |
+| Contract tests         | 2 passed / 14 failed    | 16 passed / 0 failed    |
+| Overall result         | FAILED                  | PASSED                  |
+| Benchmark human review | Required                | Not required            |
+| Coding-attempt runtime | 19.429s                 | 11.187s                 |
+| Total tokens           | 3,720                   | 4,221                   |
+
+Same task, provider/model, benchmark, and deterministic evaluator; only task/context configuration changed. The approved intervention added `docs/api-conventions.md`, `src/lib/pagination.ts`, explicit `page`/`pageSize` semantics, historical `Customer[]` compatibility, and validation expectations. Hidden tests stayed out of the coding prompt. The result supports this intervention on this benchmark; one attempt per configuration cannot establish general reliability or eliminate generation variability. Northstar production savings, review duration, and rework reduction were not measured. Runtime/tokens exclude diagnosis and human approval; inference cost is unavailable.
+
+### Recommendation
+
+**LIGHT HUMAN REVIEW — PILOT** for eligible low-risk API changes, after the rollout gate. Provide relevant implementation files, API conventions, shared utilities, and explicit compatibility requirements; require typecheck, public/unit, integration, and contract tests. **Do not automatically merge production changes.** High-risk work remains human-reviewed.
+
+Phase 1: shadow/pilot on **20–30 API tasks** while retaining current review; measure first-pass acceptance, critical regression rate, review duration, and remediation/rework time. Phase 2: reduce review only if reliability stays above a **customer-defined threshold** with **zero critical regressions**. No numeric threshold is assumed. A critical regression triggers rollback to full review.
+
+### Illustrative ROI
+
+Customer assumptions only: **210 tasks/month**, **63 current review hours/month**. If **90 low-risk tasks/month** eventually qualify and average review falls from **18 to 8 minutes**, then `90 × (18 − 8) ÷ 60 = 15` engineering hours/month could be recovered. All inputs and this calculated output are illustrative, not measured savings. Other tasks’ review time is assumed unchanged. This excludes rollout overhead, inference costs, and rework savings; the 23% rework assumption is not monetized. No dollar ROI is claimed.
+
 ## Run locally
 
 Node.js 22 or newer and npm are required. Fixture views and known-patch verification need no API key. Real agent execution currently requires macOS with working `sandbox-exec` and either a locally authenticated Codex CLI or a Gemini Developer API key.

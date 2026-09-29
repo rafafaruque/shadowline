@@ -114,6 +114,22 @@ export default function Dashboard() {
           </Link>
         </div>
       </div>
+      <Link className="experiment-teaser engagement-teaser" href="/engagement">
+        <span className="teaser-icon">
+          <ShieldCheck size={20} />
+        </span>
+        <div>
+          <div className="eyebrow">
+            FROM TECHNICAL EVIDENCE TO CUSTOMER IMPACT
+          </div>
+          <h3>Customer engagement — Northstar Software</h3>
+          <p>
+            Real experiment evidence, a pilot review policy, and illustrative
+            business assumptions.
+          </p>
+        </div>
+        <ArrowUpRight size={18} />
+      </Link>
       <section className="panel recent-runs">
         <SectionHeading
           eyebrow="THE EVIDENCE TRAIL"
