@@ -8,7 +8,7 @@ Coding agents increase implementation throughput, but uniform review requirement
 
 ## Run locally
 
-Node.js 22 or newer and npm are required. Fixture views and known-patch verification need no API key. Real agent execution currently requires macOS with working `sandbox-exec` and a Gemini Developer API key.
+Node.js 22 or newer and npm are required. Fixture views and known-patch verification need no API key. Real agent execution currently requires macOS with working `sandbox-exec` and either a locally authenticated Codex CLI or a Gemini Developer API key.
 
 ```sh
 npm ci
@@ -74,7 +74,7 @@ Implemented:
 - A small Hono customer API, existing pagination helper, public tests, independent contracts, and two known patches.
 - Fresh temporary workspaces, fixed validation commands, structured output, file-scope checks, and cleanup.
 
-Gemini generates structured file replacements server-side. Real attempts persist in local JSON and are inspectable at `/agent`; deterministic checks own acceptance. No database, diagnosis model, automatic intervention, or automatic retry exists. The original fixture “Apply intervention & rerun” button remains disabled. Real agent runs and known-patch verification never update fixture aggregate metrics.
+Codex CLI and Gemini generate structured file replacements server-side through the same provider interface. Real attempts persist in local JSON and are inspectable at `/agent`; deterministic checks own acceptance. No database, diagnosis model, automatic intervention, or automatic retry exists. The original fixture “Apply intervention & rerun” button remains disabled. Real agent runs and known-patch verification never update fixture aggregate metrics.
 
 ## Prove the evaluator
 
@@ -106,7 +106,7 @@ Dashboard metrics are calculated from the twelve inspectable attempts. Experimen
 - `lib/evaluator/benchmark.ts`: the single task's evaluator-owned requirements.
 - `benchmark-repo/`: customer API, conventions, pagination utility, and public/hidden tests.
 - `benchmarks/`: controlled route replacements and public pagination acceptance tests.
-- `lib/agent/`: explicit context builder, generic provider interface, Gemini REST adapter, path validation, execution, and local JSON store.
+- `lib/agent/`: explicit context builder, generic provider interface, Gemini REST and Codex CLI adapters, path validation, execution, and local JSON store.
 - `lib/evaluator/{sandbox.ts,bridge.mjs,worker.mjs}`: restricted application subprocess and trusted test transport.
 - `lib/diagnosis/`: future interface only.
 - `lib/policy/autonomy.ts`: risk-aware placeholder policy.
@@ -114,27 +114,31 @@ Dashboard metrics are calculated from the twelve inspectable attempts. Experimen
 
 ## Run the real coding agent
 
-Create `.env.local` from `.env.example` and set `GEMINI_API_KEY` locally. Never use a `NEXT_PUBLIC_` key. The key is used only in the server's Gemini request header; generated code receives a minimal environment without credentials.
+For **Codex CLI**, install the CLI and run `codex login` locally. Shadowline uses file-backed authentication from `CODEX_HOME/auth.json` or `~/.codex/auth.json`, without an API key. Set `SHADOWLINE_CODEX_BIN` in `.env.local` to an absolute executable path if `codex` is not on the server's PATH. `SHADOWLINE_CODEX_MODEL` defaults to `gpt-6-astra` and is independent of the Gemini setting. The adapter ignores personal project/configuration instructions, disables tools, and invokes non-interactive `codex exec` with a JSON output schema in a restricted empty directory. Codex cannot read or modify the benchmark repository. Shadowline alone validates and applies proposed files. See [CLI isolation and version requirements](docs/decisions/005-codex-cli-provider.md).
+
+For **Gemini**, create `.env.local` from `.env.example` and set `GEMINI_API_KEY` locally. Never use a `NEXT_PUBLIC_` key. The key is used only in the server's Gemini request header; generated code receives a minimal environment without credentials.
 
 `SHADOWLINE_MODEL` defaults to `gemini-3.7-flash`. Google's [pricing](https://ai.google.dev/gemini-api/docs/pricing) lists it as free-tier eligible and suited to coding. Use a free-tier Google AI Studio project; model eligibility does not establish your project's billing tier. Quota/authentication errors are recorded without automatic retry, model fallback, or billing upgrade. Free-tier requests use Google's applicable data-use terms. Only the selected benchmark context is sent.
 
-Open http://localhost:3000/agent, select Baseline or Context-rich, and click **Run coding agent**. Alternatively:
+Open http://localhost:3000/agent, select a provider and Baseline or Context-rich, and click **Run coding agent**. Alternatively, explicitly start one attempt:
 
 ```sh
-npm run agent:run -- baseline
+npm run agent:run -- baseline codex-cli
+# Alternate provider (a separate attempt):
+npm run agent:run -- baseline gemini
 # A separate, explicitly requested experiment:
-npm run agent:run -- context-rich
+npm run agent:run -- context-rich codex-cli
 ```
 
-Each invocation makes one model request and starts from the unchanged benchmark. No evaluator feedback goes back to the model. Both configurations receive the same independent acceptance checks. Baseline supplies exactly `src/app.ts`, `src/routes/customers.ts`, `src/data/customers.ts`, and `tests/customers.test.ts`. It excludes the conventions document, pagination helper, explicit compatibility criterion, and hidden tests. Context-rich adds the conventions and helper, the historical-array criterion, and requested contract/integration validation. The UI preserves exact contents, hashes, criteria, prompts, before/replacement code, rejected/applied paths, checks, and review policy.
+Each invocation starts one generation attempt from the unchanged benchmark. Neither adapter automatically retries or falls back to another model. The CLI may also perform model-catalog discovery. No evaluator feedback goes back to the model. Both configurations receive the same independent acceptance checks. Baseline supplies exactly `src/app.ts`, `src/routes/customers.ts`, `src/data/customers.ts`, and `tests/customers.test.ts`. It excludes the conventions document, pagination helper, explicit compatibility criterion, and hidden tests. Context-rich adds the conventions and helper, the historical-array criterion, and requested contract/integration validation. The UI preserves exact contents, hashes, criteria, prompts, provider/model, before/replacement code, rejected/applied paths, checks, and review policy.
 
-Actual provider usage includes thinking tokens in output. Inference cost remains null unless all three optional operator rate variables are configured; confirmed free-tier operators can explicitly set all rates to zero. Remediation effort remains null. No ROI is inferred.
+Gemini usage includes thinking tokens in output. Gemini inference cost remains null unless all three optional operator rate variables are configured; confirmed free-tier operators can explicitly set all rates to zero. Codex records CLI-reported token usage, while cost remains null because local-login usage cannot be priced using the Gemini rate settings. Remediation effort remains null. No ROI is inferred.
 
 Real records live in git-ignored `.shadowline/runs/<uuid>.json` with owner-only file permissions. Attempt numbers are scoped to task + configuration + provider + requested model. First-pass acceptance is true only when the first non-provider-error coding attempt passes all checks. `PROVIDER_ERROR` covers upstream API/transport failures, with null evaluation and first-pass acceptance; these requests are excluded from coding failures, benchmark failures, and autonomy evidence. Request numbering still includes outages for transparency. Historical 3.8 API failures are classified as provider errors on read; their original JSON files remain unchanged. A file lock serializes UI/CLI attempts. Persistence is local, unencrypted, and single-machine; it is not a database or tamper-proof audit log. Deleting records also deletes attempt history.
 
 If the host is forcibly stopped, a `RUNNING` record, temporary workspace, or `.shadowline/runs/.attempt.lock` may remain. Confirm the recorded PID is no longer executing before removing that lock and starting a new attempt. An interrupted run never becomes a pass automatically. Detail pages can be refreshed while an attempt runs. Production returns 404 for agent pages and the API; run the UI with `npm run dev`. Stop an existing dev server before browser tests because Next uses one development build lock.
 
-The first request/result and integration correction are documented in [Phase 3 evidence](docs/phase3-first-run.md).
+The Gemini requests are documented in [Phase 3 evidence](docs/phase3-first-run.md). The single Codex attempt, startup-warning parser correction, and offline transport checks are documented in [Codex run evidence](docs/phase3-codex-run.md). No completed live model response has yet been evaluated.
 
 ## Next milestone
 

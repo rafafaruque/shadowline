@@ -3,21 +3,31 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { agentConfigurations } from "@/lib/agent/configs";
-import { realRunSchema, type AgentRequest } from "@/lib/agent/schemas";
+import {
+  realRunSchema,
+  type AgentRequest,
+  type ProviderId,
+} from "@/lib/agent/schemas";
 import { SectionHeading } from "./ui";
 
 export function AgentControl({
-  model,
-  keyConfigured,
+  providers,
 }: {
-  model: string;
-  keyConfigured: boolean;
+  providers: {
+    id: ProviderId;
+    name: string;
+    model: string;
+    ready: boolean;
+    message: string;
+  }[];
 }) {
   const router = useRouter();
   const [configId, setConfigId] =
     useState<AgentRequest["configId"]>("baseline");
   const [running, setRunning] = useState(false);
   const [error, setError] = useState("");
+  const [providerId, setProviderId] = useState<ProviderId>("gemini");
+  const provider = providers.find((item) => item.id === providerId)!;
   const config = agentConfigurations[configId];
   async function run() {
     setRunning(true);
@@ -26,7 +36,11 @@ export function AgentControl({
       const response = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taskId: "customers-pagination", configId }),
+        body: JSON.stringify({
+          taskId: "customers-pagination",
+          configId,
+          providerId,
+        }),
       });
       const payload = await response.json();
       if (!response.ok)
@@ -54,10 +68,27 @@ export function AgentControl({
       />
       <div className="card-content agent-controls">
         <div className="info-strip">
-          Controlled benchmark environment. Gemini proposes code; independent
-          checks decide acceptance. Each attempt starts from the unchanged
-          baseline. No automatic retries or interventions.
+          Controlled benchmark environment. The selected model proposes code;
+          independent checks decide acceptance. Each attempt starts from the
+          unchanged baseline. No automatic retries or interventions.
         </div>
+        <label>
+          Provider
+          <select
+            aria-label="Provider"
+            disabled={running}
+            value={providerId}
+            onChange={(event) =>
+              setProviderId(event.target.value as ProviderId)
+            }
+          >
+            {providers.map((item) => (
+              <option value={item.id} key={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </label>
         <label>
           Task
           <select
@@ -84,7 +115,7 @@ export function AgentControl({
           </select>
         </label>
         <p>
-          <strong>Model:</strong> {model} · Gemini Developer API
+          <strong>Model:</strong> {provider.model} · {provider.name}
         </p>
         <div>
           <h3>Context supplied</h3>
@@ -105,16 +136,11 @@ export function AgentControl({
           {config.requiredChecks.join(" · ")}. Shadowline independently runs all
           acceptance checks for both configurations.
         </p>
-        {!keyConfigured && (
-          <p className="text-warn">
-            Configure GEMINI_API_KEY in .env.local on the server, then refresh
-            this page.
-          </p>
-        )}
+        <p className={provider.ready ? "" : "text-warn"}>{provider.message}</p>
         <button
           className="button primary"
           onClick={run}
-          disabled={running || !keyConfigured}
+          disabled={running || !provider.ready}
         >
           {running ? "Running coding agent…" : "Run coding agent"}
         </button>

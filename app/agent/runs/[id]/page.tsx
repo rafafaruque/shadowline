@@ -198,6 +198,14 @@ export default async function AgentRunPage({
       <section className="panel">
         <SectionHeading title="Measured execution metadata" />
         <div className="card-content">
+          {run.providerMetadata && (
+            <details className="benchmark-check">
+              <summary>Provider execution details</summary>
+              <pre className="agent-code">
+                {JSON.stringify(run.providerMetadata, null, 2)}
+              </pre>
+            </details>
+          )}
           <dl className="benchmark-evidence">
             <dt>Run ID</dt>
             <dd>{run.id}</dd>
@@ -216,7 +224,9 @@ export default async function AgentRunPage({
             <dt>Estimated inference cost</dt>
             <dd>
               {run.estimatedInferenceCost === null
-                ? "Unknown (no verified rates configured)"
+                ? run.provider === "codex-cli"
+                  ? "Unknown (local Codex login usage)"
+                  : "Unknown (no verified rates configured)"
                 : `$${run.estimatedInferenceCost.toFixed(6)}`}{" "}
               {run.costBasis}
             </dd>

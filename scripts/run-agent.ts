@@ -6,6 +6,7 @@ async function main() {
   const run = await runCodingAgent({
     taskId: "customers-pagination",
     configId: process.argv[2] ?? "baseline",
+    providerId: process.argv[3] ?? "gemini",
   });
   console.log(
     JSON.stringify(

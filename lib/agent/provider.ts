@@ -3,6 +3,7 @@ import {
   agentProposalSchema,
   type ContextSnapshot,
   type RealAgentRun,
+  type ProviderId,
 } from "./schemas";
 
 export interface ProviderResult {
@@ -11,6 +12,7 @@ export interface ProviderResult {
   responseId: string | null;
   tokenUsage: RealAgentRun["tokenUsage"];
   error: string | null;
+  metadata?: RealAgentRun["providerMetadata"];
 }
 export interface ModelProvider {
   readonly id: string;
@@ -26,7 +28,9 @@ export class ProviderError extends Error {
     this.name = "ProviderError";
   }
 }
-export function configuredModel() {
+export function configuredModel(providerId: ProviderId = "gemini") {
+  if (providerId === "codex-cli")
+    return process.env.SHADOWLINE_CODEX_MODEL?.trim() || "gpt-6-astra";
   return process.env.SHADOWLINE_MODEL?.trim() || "gemini-3.7-flash";
 }
 

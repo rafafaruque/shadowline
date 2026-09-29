@@ -13,9 +13,12 @@ export const agentProposalSchema = z.strictObject({
     .min(1)
     .max(8),
 });
+export const providerIdSchema = z.enum(["gemini", "codex-cli"]);
+export type ProviderId = z.infer<typeof providerIdSchema>;
 export const agentRequestSchema = z.strictObject({
   taskId: z.literal("customers-pagination"),
   configId: z.enum(["baseline", "context-rich"]),
+  providerId: providerIdSchema.default("gemini"),
 });
 export type AgentRequest = z.infer<typeof agentRequestSchema>;
 export type AgentProposal = z.infer<typeof agentProposalSchema>;
@@ -46,6 +49,9 @@ export const realRunSchema = z.object({
   model: z.string(),
   resolvedModel: z.string().nullable(),
   responseId: z.string().nullable(),
+  providerMetadata: z
+    .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
+    .optional(),
   attemptNumber: z.number().int().positive(),
   status: z.enum([
     "RUNNING",

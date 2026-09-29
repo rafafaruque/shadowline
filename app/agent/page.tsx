@@ -4,12 +4,15 @@ import { AgentControl } from "@/components/agent-control";
 import { Badge, PageHeading, SectionHeading } from "@/components/ui";
 import { configuredModel } from "@/lib/agent/provider";
 import { RunStore } from "@/lib/agent/store";
+import { codexAvailability } from "@/lib/agent/codex-cli";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Coding agent" };
 export default async function AgentPage() {
   if (process.env.NODE_ENV !== "development") notFound();
   const runs = await new RunStore().list();
+  const codex = await codexAvailability();
+  const geminiReady = Boolean(process.env.GEMINI_API_KEY?.trim());
   return (
     <div className="benchmark-verification">
       <PageHeading
@@ -18,8 +21,23 @@ export default async function AgentPage() {
         description="Inspect what the model knew, what it changed, and whether deterministic checks accepted it."
       />
       <AgentControl
-        model={configuredModel()}
-        keyConfigured={Boolean(process.env.GEMINI_API_KEY?.trim())}
+        providers={[
+          {
+            id: "gemini",
+            name: "Gemini Developer API",
+            model: configuredModel("gemini"),
+            ready: geminiReady,
+            message: geminiReady
+              ? "Uses the server-side Gemini API key."
+              : "Configure GEMINI_API_KEY in .env.local on the server, then refresh this page.",
+          },
+          {
+            id: "codex-cli",
+            name: "Codex CLI",
+            model: configuredModel("codex-cli"),
+            ...codex,
+          },
+        ]}
       />
       <section className="panel">
         <SectionHeading title="Real agent runs" />
@@ -32,7 +50,7 @@ export default async function AgentPage() {
                     {run.configId} · attempt {run.attemptNumber}
                   </strong>
                   <br />
-                  {run.model} · {run.startedAt}
+                  {run.provider} / {run.model} · {run.startedAt}
                 </Link>
                 <Badge value={run.status} />
               </div>

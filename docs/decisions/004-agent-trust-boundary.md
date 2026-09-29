@@ -8,7 +8,7 @@ The coding model must modify real files for the experiment to be meaningful. Arb
 
 ## Decision
 
-The model produces structured full-file modifications only. Shadowline validates paths, applies files, owns process execution, and owns evaluation. Gemini Developer API is the sole real provider, behind a provider-independent interface. Credentials remain server-side in `GEMINI_API_KEY`; no tools, shell, repository browsing, automatic retry, or evaluator-feedback loop is exposed to the model.
+The model produces structured full-file modifications only. Shadowline validates paths, applies files, owns process execution, and owns evaluation. Gemini Developer API and the local Codex CLI sit behind a provider-independent interface. Credentials remain server-side; no tools, shell, repository browsing, automatic retry, or evaluator-feedback loop is exposed to the model. [ADR 005](005-codex-cli-provider.md) describes the CLI's additional process boundary and isolated authentication.
 
 Context is assembled from an explicit per-configuration file list, never a repository dump. Neither configuration receives hidden tests or evaluator infrastructure. Baseline omits API conventions, the helper, and the explicit compatibility criterion. Rich context adds those inputs without changing ground-truth evaluation. Exact prompts and file contents/hashes are saved.
 

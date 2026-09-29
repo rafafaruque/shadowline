@@ -89,6 +89,35 @@ test("agent controls expose exact configurations without making a model call", a
   await expect(
     page.getByRole("heading", { name: "Coding agent", exact: true }),
   ).toBeVisible();
+  await expect(page.getByLabel("Provider", { exact: true })).toHaveValue(
+    "gemini",
+  );
+  await page.getByLabel("Provider", { exact: true }).selectOption("codex-cli");
+  await expect(
+    page.getByText("Model:", { exact: true }).locator(".."),
+  ).toContainText("Codex CLI");
+  const runButton = page.getByRole("button", { name: "Run coding agent" });
+  if (await runButton.isEnabled()) {
+    // Intercept before clicking: browser tests must never spend a real inference.
+    await page.route("**/api/agent", async (route) => {
+      expect(route.request().postDataJSON()).toEqual({
+        taskId: "customers-pagination",
+        configId: "baseline",
+        providerId: "codex-cli",
+      });
+      await route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "Browser mock: no provider invoked." }),
+      });
+    });
+    await runButton.click();
+    await expect(
+      page.getByText("Browser mock: no provider invoked."),
+    ).toBeVisible();
+    await page.unroute("**/api/agent");
+  }
+  await page.getByLabel("Provider", { exact: true }).selectOption("gemini");
   await expect(
     page.getByText("tests/customers.test.ts", { exact: true }),
   ).toBeVisible();
@@ -116,6 +145,15 @@ test("agent controls expose exact configurations without making a model call", a
     },
   });
   expect(invalid.status()).toBe(400);
+  const unknownProvider = await request.post("/api/agent", {
+    headers: { origin: "http://127.0.0.1:3101" },
+    data: {
+      taskId: "customers-pagination",
+      configId: "baseline",
+      providerId: "untrusted",
+    },
+  });
+  expect(unknownProvider.status()).toBe(400);
   const crossOrigin = await request.post("/api/agent", {
     headers: { origin: "https://example.test" },
     data: { taskId: "customers-pagination", configId: "baseline" },

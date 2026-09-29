@@ -10,7 +10,6 @@ import { buildContext } from "./prompt";
 import {
   configuredModel,
   estimateCost,
-  geminiProvider,
   ProviderError,
   type ModelProvider,
 } from "./provider";
@@ -21,6 +20,7 @@ import {
 } from "./schemas";
 import { RunStore } from "./store";
 import { countsAsCodingAttempt } from "./evidence";
+import { createProvider } from "./providers";
 
 /** Internal dependencies support deterministic tests; neither is accepted from HTTP. */
 export async function runCodingAgent(
@@ -28,11 +28,11 @@ export async function runCodingAgent(
   dependencies?: { provider: ModelProvider; store: RunStore; model: string },
 ) {
   const request = agentRequestSchema.parse(input);
-  const provider = dependencies?.provider ?? geminiProvider();
+  const provider = dependencies?.provider ?? createProvider(request.providerId);
   const store = dependencies?.store ?? new RunStore();
   assertSandboxAvailable();
   return store.exclusive(async () => {
-    const model = dependencies?.model ?? configuredModel();
+    const model = dependencies?.model ?? configuredModel(request.providerId);
     const context = await buildContext(request.configId, model);
     const prior = (await store.list()).filter(
       (run) =>
@@ -45,7 +45,8 @@ export async function runCodingAgent(
     const run: RealAgentRun = {
       id: randomUUID(),
       source: "REAL_AGENT",
-      ...request,
+      taskId: request.taskId,
+      configId: request.configId,
       provider: provider.id,
       model,
       resolvedModel: null,
@@ -82,8 +83,11 @@ export async function runCodingAgent(
           resolvedModel: response.model,
           responseId: response.responseId,
           tokenUsage: response.tokenUsage,
+          ...(response.metadata ? { providerMetadata: response.metadata } : {}),
         },
-        estimateCost(response.tokenUsage),
+        provider.id === "codex-cli"
+          ? { estimatedInferenceCost: null, costBasis: null }
+          : estimateCost(response.tokenUsage),
       );
       if (response.error) throw new Error(response.error);
       let raw: unknown;

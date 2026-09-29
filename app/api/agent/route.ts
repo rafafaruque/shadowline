@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Supply only taskId: customers-pagination and configId: baseline or context-rich.",
+          "Supply only taskId: customers-pagination, configId: baseline or context-rich, and providerId: gemini or codex-cli.",
       },
       { status: 400 },
     );

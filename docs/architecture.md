@@ -4,7 +4,7 @@
 
 ## Product shell and data boundaries
 
-The Next.js App Router retains the Phase 1 fixture dashboard, run explorer, details, and experiments. Phase 2 adds a development-only `/verification` page and `/api/benchmark` POST endpoint that execute real checks. Zod validates domain data and evaluator request/response boundaries. The interface displays actual benchmark executions separately from authored aggregates. Phase 3 adds a server-side Gemini provider, `/agent`, `/agent/runs/[id]`, and `/api/agent`, with local JSON persistence for real attempts. No database is required. Development and production builds continue to use Webpack because Turbopack's CSS worker hit a local port restriction during Phase 1.
+The Next.js App Router retains the Phase 1 fixture dashboard, run explorer, details, and experiments. Phase 2 adds a development-only `/verification` page and `/api/benchmark` POST endpoint that execute real checks. Zod validates domain data and evaluator request/response boundaries. The interface displays actual benchmark executions separately from authored aggregates. Phase 3 adds server-side Gemini and Codex CLI providers, `/agent`, `/agent/runs/[id]`, and `/api/agent`, with local JSON persistence for real attempts. No database is required. Development and production builds continue to use Webpack because Turbopack's CSS worker hit a local port restriction during Phase 1.
 
 `lib/fixtures/` remains authored demo data. `lib/evaluator/` now performs deterministic evaluation. `EvaluationResult` retains separate unit, integration, contract, scope, and critical-failure fields; real executions additionally include public-suite totals, validation duration, and structured check records. A completed result cannot pass with failing checks or incomplete evidence. Known-patch results live in browser state or CLI output. Real agent results persist separately under `.shadowline/runs`; neither updates fixture metrics.
 
@@ -78,7 +78,7 @@ An isolated directory is **not an OS security sandbox**. Test code still execute
 flowchart LR
   Task --> Config[Agent Config]
   Config --> Context[Context Builder]
-  Context --> Agent[Coding Agent / Gemini]
+  Context --> Agent[Coding Agent / Gemini or Codex CLI]
   Agent --> Patch[Structured Patch]
   Patch --> Paths[Path Validation]
   Paths --> Workspace[Isolated Workspace]
@@ -86,7 +86,7 @@ flowchart LR
   Evaluator --> Result[Persisted Run Result]
 ```
 
-The generic `ModelProvider` takes a `ContextSnapshot` and returns text plus nullable usage/response metadata. The Gemini adapter uses one server-side REST request, structured JSON output, a bounded response, a 180-second timeout, no tools, and no retries. Adding a future provider does not change context construction, patch validation, execution, persistence, or the UI. Model/version and provider identity are recorded per run.
+The generic `ModelProvider` takes a `ContextSnapshot` and returns text plus nullable usage/response metadata. The Gemini adapter uses one server-side REST request, structured JSON output, a bounded response, a 180-second timeout, no tools, and no retries. The Codex CLI adapter uses non-interactive structured output with an isolated local login and an outer OS sandbox denying repository access; see [ADR 005](decisions/005-codex-cli-provider.md). The UI selects a registered provider. Context construction, patch validation, application execution, and evaluation are shared. Model/version and provider identity are recorded per run; CLI usage cost remains unknown.
 
 `configs.ts` explicitly enumerates context files. Baseline receives only app wiring, customer route, customer data/types, and existing public customer tests. Context-rich adds conventions, pagination helper, the explicit legacy-array criterion, and requested integration/contracts. Neither receives hidden tests or evaluator source. `prompt.ts` records exact file contents/hashes and complete prompts. Requested validation never reduces the evaluator's fixed checks.
 
